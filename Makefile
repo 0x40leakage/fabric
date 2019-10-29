@@ -67,6 +67,7 @@ GO_TAGS ?=
 
 CHAINTOOL_URL ?= https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric/chaintool-$(CHAINTOOL_RELEASE)/hyperledger-fabric-chaintool-$(CHAINTOOL_RELEASE).jar
 
+
 export GO_LDFLAGS
 
 EXECUTABLES = go docker git curl
@@ -82,7 +83,8 @@ PROJECT_FILES = $(shell git ls-files  | grep -v ^test | grep -v ^unit-test | \
 	grep -v ^.git | grep -v ^examples | grep -v ^devenv | grep -v .png$ | \
 	grep -v ^LICENSE )
 RELEASE_TEMPLATES = $(shell git ls-files | grep "release/templates")
-IMAGES = peer orderer ccenv javaenv buildenv testenv zookeeper kafka couchdb tools
+# IMAGES = peer orderer ccenv javaenv buildenv testenv zookeeper kafka couchdb tools
+IMAGES = peer orderer ccenv tools
 RELEASE_PLATFORMS = windows-amd64 darwin-amd64 linux-amd64 linux-ppc64le linux-s390x
 RELEASE_PKGS = configtxgen cryptogen configtxlator peer orderer
 
@@ -96,11 +98,14 @@ pkgmap.cryptogen      := $(PKGNAME)/common/tools/cryptogen
 
 include docker-env.mk
 
-all: native docker checks
+# all: native docker checks
+all: native docker
 
-checks: license spelling linter unit-test behave
+# checks: license spelling linter unit-test behave
+checks: spelling unit-test behave
 
-desk-check: license spelling linter verify behave
+# desk-check: license spelling linter verify behave
+desk-check: spelling verify behave
 
 .PHONY: spelling
 spelling:
@@ -187,7 +192,10 @@ linter: buildenv
 %/chaintool: Makefile
 	@echo "Installing chaintool"
 	@mkdir -p $(@D)
-	curl -fL $(CHAINTOOL_URL) > $@
+	@echo $@
+	# curl -fL $(CHAINTOOL_URL) > $@
+	# $@: build/bin/chaintool
+	cp ./cached/hyperledger-fabric-chaintool-1.0.0.jar $@
 	chmod +x $@
 
 # We (re)build a package within a docker context but persist the $GOPATH/pkg
@@ -220,8 +228,10 @@ build/docker/gotools: gotools/Makefile
 		make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj
 
 # Both peer and peer-docker depend on ccenv and javaenv (all docker env images it supports).
-build/bin/peer: build/image/ccenv/$(DUMMY) build/image/javaenv/$(DUMMY)
-build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY) build/image/javaenv/$(DUMMY)
+# build/bin/peer: build/image/ccenv/$(DUMMY) build/image/javaenv/$(DUMMY)
+# build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY) build/image/javaenv/$(DUMMY)
+build/bin/peer: build/image/ccenv/$(DUMMY)
+build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY)
 
 build/bin/%: $(PROJECT_FILES)
 	@mkdir -p $(@D)
@@ -287,6 +297,7 @@ build/gotools.tar.bz2: build/docker/gotools
 
 build/goshim.tar.bz2: $(GOSHIM_DEPS)
 	@echo "Creating $@"
+	# requre bzip2 installed
 	@tar -jhc -C $(GOPATH)/src $(patsubst $(GOPATH)/src/%,%,$(GOSHIM_DEPS)) > $@
 
 build/sampleconfig.tar.bz2: $(shell find sampleconfig -type f)

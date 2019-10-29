@@ -33,7 +33,8 @@ ARG DISTRO_NAME=zookeeper-3.4.9
 # Download Apache Zookeeper, verify its PGP signature, untar and clean up
 RUN set -x \
     && cd / \
-    && curl -fsSL "http://www.apache.org/dist/zookeeper/$DISTRO_NAME/$DISTRO_NAME.tar.gz" | tar -xz \
+    # && curl -fsSL "http://www.apache.org/dist/zookeeper/$DISTRO_NAME/$DISTRO_NAME.tar.gz" | tar -xz \
+    && curl -fsSL "https://archive.apache.org/dist/zookeeper/$DISTRO_NAME/$DISTRO_NAME.tar.gz" | tar -xz \
     && mv "$DISTRO_NAME/conf/"* "$ZOO_CONF_DIR"
 
 WORKDIR $DISTRO_NAME
