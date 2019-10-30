@@ -191,25 +191,24 @@ linter: buildenv
 
 %/chaintool: Makefile
 	@echo "Installing chaintool"
-	@mkdir -p $(@D)
-	@echo $@
+	mkdir -p $(@D)
 	# curl -fL $(CHAINTOOL_URL) > $@
-	# $@: build/bin/chaintool
 	cp ./cached/hyperledger-fabric-chaintool-1.0.0.jar $@
 	chmod +x $@
 
 # We (re)build a package within a docker context but persist the $GOPATH/pkg
 # directory so that subsequent builds are faster
 build/docker/bin/%: $(PROJECT_FILES)
+	@echo
 	$(eval TARGET = ${patsubst build/docker/bin/%,%,${@}})
 	@echo "Building $@"
-	@mkdir -p build/docker/bin build/docker/$(TARGET)/pkg
-	@$(DRUN) \
+	mkdir -p build/docker/bin build/docker/$(TARGET)/pkg
+	$(DRUN) \
 		-v $(abspath build/docker/bin):/opt/gopath/bin \
 		-v $(abspath build/docker/$(TARGET)/pkg):/opt/gopath/pkg \
 		$(BASE_DOCKER_NS)/fabric-baseimage:$(BASE_DOCKER_TAG) \
 		go install -ldflags "$(DOCKER_GO_LDFLAGS)" $(pkgmap.$(@F))
-	@touch $@
+	touch $@
 
 build/bin:
 	mkdir -p $@
@@ -220,8 +219,8 @@ changelog:
 build/docker/gotools/bin/protoc-gen-go: build/docker/gotools
 
 build/docker/gotools: gotools/Makefile
-	@mkdir -p $@/bin $@/obj
-	@$(DRUN) \
+	mkdir -p $@/bin $@/obj
+	$(DRUN) \
 		-v $(abspath $@):/opt/gotools \
 		-w /opt/gopath/src/$(PKGNAME)/gotools \
 		$(BASE_DOCKER_NS)/fabric-baseimage:$(BASE_DOCKER_TAG) \
@@ -234,7 +233,8 @@ build/bin/peer: build/image/ccenv/$(DUMMY)
 build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY)
 
 build/bin/%: $(PROJECT_FILES)
-	@mkdir -p $(@D)
+	@echo
+	mkdir -p $(@D)
 	@echo "$@"
 	$(CGO_FLAGS) GOBIN=$(abspath $(@D)) go install -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
 	@echo "Binary available as $@"
@@ -270,6 +270,7 @@ build/image/tools/payload:      build/docker/bin/cryptogen \
 				build/sampleconfig.tar.bz2
 
 build/image/%/payload:
+	@echo "Creating $@"
 	mkdir -p $@
 	cp $^ $@
 
@@ -290,14 +291,14 @@ build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile
 	@echo "Building docker $(TARGET)-image"
 	$(DBUILD) -t $(DOCKER_NS)/fabric-$(TARGET) $(@D)
 	docker tag $(DOCKER_NS)/fabric-$(TARGET) $(DOCKER_NS)/fabric-$(TARGET):$(DOCKER_TAG)
-	@touch $@
+	touch $@
 
 build/gotools.tar.bz2: build/docker/gotools
 	(cd $</bin && tar -jc *) > $@
 
 build/goshim.tar.bz2: $(GOSHIM_DEPS)
 	@echo "Creating $@"
-	# requre bzip2 installed
+	# require bzip2 installed
 	@tar -jhc -C $(GOPATH)/src $(patsubst $(GOPATH)/src/%,%,$(GOSHIM_DEPS)) > $@
 
 build/sampleconfig.tar.bz2: $(shell find sampleconfig -type f)

@@ -1,5 +1,0 @@
-- `Makefile`
-    - `images/%/Dockerfile.in`
-    - `gotools/Makefile`
-    - `docker-env.mk`
-    - `scripts`

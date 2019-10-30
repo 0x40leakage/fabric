@@ -33,25 +33,28 @@ go.fqp.gocov-xml:= github.com/AlekSi/gocov-xml
 all: $(GOTOOLS_BIN)
 
 install: $(GOTOOLS_BIN)
-	@mkdir -p $(BINDIR)
+	mkdir -p $(BINDIR)
 	cp $^ $(BINDIR)
 
 # Special override for protoc-gen-go since we want to use the version vendored with the project
 gotool.protoc-gen-go:
 	@echo "Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go"
-	@mkdir -p $(TMP_GOPATH)/src/github.com/golang/protobuf/
-	@cp -R $(GOPATH)/src/github.com/hyperledger/fabric/vendor/github.com/golang/protobuf/* $(TMP_GOPATH)/src/github.com/golang/protobuf
-	@GOPATH=$(abspath $(TMP_GOPATH)) go install github.com/golang/protobuf/protoc-gen-go
+	mkdir -p $(TMP_GOPATH)/src/github.com/golang/protobuf/
+	cp -R $(GOPATH)/src/github.com/hyperledger/fabric/vendor/github.com/golang/protobuf/* $(TMP_GOPATH)/src/github.com/golang/protobuf
+	GOPATH=$(abspath $(TMP_GOPATH)) go install github.com/golang/protobuf/protoc-gen-go
+	@echo
 
 # Default rule for gotools uses the name->path map for a generic 'go get' style build
 gotool.%:
 	$(eval TOOL = ${subst gotool.,,${@}})
 	@echo "Building ${go.fqp.${TOOL}} -> $(TOOL)"
-	@GOPATH=$(abspath $(TMP_GOPATH)) go get ${go.fqp.${TOOL}}
+	GOPATH=$(abspath $(TMP_GOPATH)) go get ${go.fqp.${TOOL}}
+	@echo
 
 $(GOBIN)/%:
+	@echo "GOBIN: $(GOBIN), GOTOOLS_BIN: $(GOTOOLS_BIN)"
 	$(eval TOOL = ${subst $(GOBIN)/,,${@}})
-	@$(MAKE) gotool.$(TOOL)
+	$(MAKE) gotool.$(TOOL)
 
 .PHONY: clean
 clean:
