@@ -12,13 +12,15 @@ CHANNEL_NAME=$1
 : ${CHANNEL_NAME:="mychannel"}
 echo $CHANNEL_NAME
 
-export FABRIC_ROOT=$PWD/../..
-export FABRIC_CFG_PATH=$PWD
+export FABRIC_ROOT=$PWD/../.. 	# 当前目录退两级 /home/centos/go/src/github.com/hyperledger/fabric
+export FABRIC_CFG_PATH=$PWD		# 当前目录 /home/centos/go/src/github.com/hyperledger/fabric/examples/e2e_cli
+echo $FABRIC_ROOT
+echo $FABRIC_CFG_PATH
 echo
 
 OS_ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')" | awk '{print tolower($0)}')
 
-## Using docker-compose template replace private key file names with constants
+## Using docker-compose template replace private key file names with constants (for ca)
 function replacePrivateKey () {
 	ARCH=`uname -s | grep Darwin`
 	if [ "$ARCH" == "Darwin" ]; then
@@ -98,6 +100,6 @@ function generateChannelArtifacts() {
 }
 
 generateCerts
-replacePrivateKey
+# replacePrivateKey
 generateChannelArtifacts
 
