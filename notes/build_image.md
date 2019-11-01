@@ -48,7 +48,7 @@
 - `native: peer orderer configtxgen cryptogen configtxlator`
 ## 1. `peer: build/bin/peer`
 - Output
-    - 6: `protoc-gen-go`, `govendor` under `./build/docker/gotools/bin`
+    - 6: `protoc-gen-go`, `govendor` under `./build/docker/gotools/bin` (`-v` specified)
         - `./build/docker/gotools/obj/gopath` holds the temporary `GOPATH` for inside the container
         - Volume
             - `./fabric/build/docker/gotools:/opt/gotools`
@@ -149,7 +149,6 @@
                 hyperledger/fabric-baseimage:x86_64-0.3.2 \
                 # **inside baseimage container** (override default flags: BINDIR ?= /usr/local/bin; OBJDIR ?= build)
                 make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj
-                # BINDIR=/opt/gotools/bin: 解决 cp 权限问题
 
 
         # 1. GOTOOLS_BIN: /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/obj/gopath/bin/govendor
@@ -179,48 +178,26 @@
               @echo
         ```
 
-- Q
+- [ ] Q
 
         ```bash
-        # OBJDIR=/opt/gotools/obj: 
+        docker run -it --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
+        -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/gotools:/opt/gotools \
+        -w /opt/gopath/src/github.com/hyperledger/fabric/gotools \
+        hyperledger/fabric-baseimage:x86_64-0.3.2 \
+         bash
 
         # run inside baseimage container
-        make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj # with OBJDIR
-        # make gotool.protoc-gen-go
-        # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-        # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
-        # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-        # mkdir -p /opt/gotools/bin
-        # cp /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/bin
 
-        make install OBJDIR=/opt/gotools/obj # with OBJDIR
-          # make gotool.protoc-gen-go
-          # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-          # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
-          # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-          # mkdir -p /usr/local/bin
-        
-        # cp /opt/gotools/obj/gopath/bin/protoc-gen-go /usr/local/bin
-        # cp: cannot create regular file '/usr/local/bin/protoc-gen-go': Permission denied
-
-          # Makefile:36: recipe for target 'install' failed
-          # make: *** [install] Error 1
-
-        make install BINDIR=/opt/gotools/bin
-        # mkdir -p /opt/gotools/bin
-        # cp /opt/gopath/src/github.com/hyperledger/fabric/gotools/build/gopath/bin/protoc-gen-go /opt/gotools/bin
-
-        make install
-          # mkdir -p /usr/local/bin
-          # cp /opt/gopath/src/github.com/hyperledger/fabric/gotools/build/gopath/bin/protoc-gen-go /usr/local/bin
-        # cp: cannot create regular file '/usr/local/bin/protoc-gen-go': Permission denied
-          # Makefile:36: recipe for target 'install' failed
-          # make: *** [install] Error 1
+        # make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj
+        # make install OBJDIR=/opt/gotools/obj
+        # make install BINDIR=/opt/gotools/bin
+        # make install
         ```
 
 ## 2. `orderer: build/bin/orderer`
 - Output
-    - `orderer` under `./build/bin`
+    - `orderer` under `./build/bin` (`GOBIN` specified)
 - Recipe
 	
         ```bash
@@ -238,7 +215,7 @@
 
 ## `configtxgen: build/bin/configtxgen`, `cryptogen: build/bin/cryptogen`, `configtxlator: build/bin/configtxlator`
 - Output
-    - `configtxgen`, `cryptogen`, `configtxlator` under `./build/bin` (`GOBIN`)
+    - `configtxgen`, `cryptogen`, `configtxlator` under `./build/bin` (`GOBIN` specified)
 - Recipe
 
     ```bash
@@ -257,313 +234,163 @@
 # `make docker`
 - `docker: $(patsubst %,build/image/%/$(DUMMY), $(IMAGES))`
         - `IMAGES = peer orderer ccenv tools kafka zookeeper`
-## 1. `peer` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-- `build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY)`
-    - See `make peer`
-- `build/image/%/payload` translates to payload definition
-- `build/image/peer/.dummy-x86_64-1.0.3: Makefile build/image/%/payload build/image/%/Dockerfile`
+## 1. `docker: build/image/peer/$(DUMMY)`
+- Recipe
 
-        ```bash
-        Building docker peer-image
-        docker build  -t hyperledger/fabric-peer build/image/peer
-        Sending build context to Docker daemon  25.36MB
-                Step 1/7 : FROM hyperledger/fabric-baseos:x86_64-0.3.2
-                ---> bbcbb9da2d83
-                Step 2/7 : ENV FABRIC_CFG_PATH /etc/hyperledger/fabric
-                ---> Running in 9530539f02b8
-                Removing intermediate container 9530539f02b8
-                ---> 9afd0b8626f5
-                Step 3/7 : RUN mkdir -p /var/hyperledger/production $FABRIC_CFG_PATH
-                ---> Running in 1a94a2ea4f73
-                Removing intermediate container 1a94a2ea4f73
-                ---> 9b1b528c2228
-                Step 4/7 : COPY payload/peer /usr/local/bin
-                ---> 0b3f641a5cd6
-                Step 5/7 : ADD  payload/sampleconfig.tar.bz2 $FABRIC_CFG_PATH
-                ---> 63505661cefc
-                Step 6/7 : CMD ["peer","node","start"]
-                ---> Running in 82c3a23737ac
-                Removing intermediate container 82c3a23737ac
-                ---> 547fc5485a02
-                Step 7/7 : LABEL org.hyperledger.fabric.version=1.0.3       org.hyperledger.fabric.base.version=0.3.2
-                ---> Running in 5680fc50259f
-                Removing intermediate container 5680fc50259f
-                ---> 169bec3377a8
-        Successfully built 169bec3377a8
-        Successfully tagged hyperledger/fabric-peer:latest
-        docker tag hyperledger/fabric-peer hyperledger/fabric-peer:x86_64-1.0.3
-        touch build/image/peer/.dummy-x86_64-1.0.3
-        ```
+    ```bash
+    # 1.
+      # 1.1 special prerequisites
+      build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY)
 
-- Output
-    - `hyperledger/fabric-peer:latest` image, `hyperledger/fabric-peer:x86_64-1.0.3` image
-        - From `hyperledger/fabric-baseos:x86_64-0.3.2`
-        - `FABRIC_CFG_PATH`: `/etc/hyperledger/fabric`
-            - `/etc/hyperledger/fabric` created
-            - `sampleconfig.tar.bz2` decompressed and unpacked `/etc/hyperledger/fabric`
-        - `/var/hyperledger/production` created
-        - `peer` (**built using `baseimage`**) in `/usr/local/bin`
-        - `CMD ["peer","node","start"]`
-### 1. `build/image/peer/payload`
-- Translates to
-	
-        ```makefile
-        build/image/peer/payload:       build/docker/bin/peer \
+        # 2.1. general recipe for both prerequisites and commands)
+        #    see make native - peer - output 3
+        build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile
+
+      # 1.2 general recipe for both prerequisites and commands 
+      build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile
+        $(eval TARGET = ${patsubst build/image/%/$(DUMMY),%,${@}})
+        @echo "Building docker $(TARGET)-image"
+        $(DBUILD) -t $(DOCKER_NS)/fabric-$(TARGET) $(@D)
+        docker tag $(DOCKER_NS)/fabric-$(TARGET) $(DOCKER_NS)/fabric-$(TARGET):$(DOCKER_TAG)
+        touch $@
+
+        # 2.2
+          # 2.2.1
+            # 2.2.1.1
+            build/image/peer/payload:       build/docker/bin/peer \
 				build/sampleconfig.tar.bz2
-        ```
+            # 2.2.1.2
+            build/image/%/payload:
+              @echo "Creating $@"
+              mkdir -p $@
+              cp $^ $@
+          # 2.2.2
+          build/image/%/Dockerfile: images/%/Dockerfile.in
+            @echo "creating Dockerfile"
+            @cat $< \
+                | sed -e 's/_BASE_NS_/$(BASE_DOCKER_NS)/g' \
+                | sed -e 's/_NS_/$(DOCKER_NS)/g' \
+                | sed -e 's/_BASE_TAG_/$(BASE_DOCKER_TAG)/g' \
+                | sed -e 's/_TAG_/$(DOCKER_TAG)/g' \
+                > $@
+            @echo LABEL $(BASE_DOCKER_LABEL).version=$(PROJECT_VERSION) \\>>$@
+            @echo "     " $(BASE_DOCKER_LABEL).base.version=$(BASEIMAGE_RELEASE)>>$@
+          # 2.2.3 
+          Makefile
+    ```
 
-        - Output
-            - `peer`, `sampleconfig.tar.bz2` under `build/image/peer/payload`
-- Then `build/image/%/payload`
-
-        ```bash
-        Creating build/image/peer/payload
-        mkdir -p build/image/peer/payload
-        cp build/docker/bin/peer build/sampleconfig.tar.bz2 build/image/peer/payload
-        ```
-
-#### 1. `build/docker/bin/%: $(PROJECT_FILES)`
-
-```bash 
-Building build/docker/bin/peer
-mkdir -p build/docker/bin build/docker/peer/pkg
-docker run -i --rm --user=1000 
-        -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric \
-        -w /opt/gopath/src/github.com/hyperledger/fabric \
-        -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/bin:/opt/gopath/bin \
-        -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/peer/pkg:/opt/gopath/pkg \
-        hyperledger/fabric-baseimage:x86_64-0.3.2 \
-        go install -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger -linkmode external -extldflags '-static -lpthread'" github.com/hyperledger/fabric/peer
-touch build/docker/bin/peer
-```
-
-- Output
-    - `peer` in `build/docker/bin`
-#### 2. `build/sampleconfig.tar.bz2: $(shell find sampleconfig -type f)`
-
-```bash
-(cd sampleconfig && tar -jc *) > build/sampleconfig.tar.bz2
-```
-## 2. `orderer` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-
-```bash
-Building docker orderer-image
-docker build  -t hyperledger/fabric-orderer build/image/orderer
-Sending build context to Docker daemon  22.38MB
-        Step 1/8 : FROM hyperledger/fabric-baseos:x86_64-0.3.2
-        ---> bbcbb9da2d83
-        Step 2/8 : ENV FABRIC_CFG_PATH /etc/hyperledger/fabric
-        ---> Running in f340144076b5
-        Removing intermediate container f340144076b5
-        ---> 0b638a580b61
-        Step 3/8 : RUN mkdir -p /var/hyperledger/production $FABRIC_CFG_PATH
-        ---> Running in 965b23d0fb0c
-        Removing intermediate container 965b23d0fb0c
-        ---> e98d73d59ac3
-        Step 4/8 : COPY payload/orderer /usr/local/bin
-        ---> cfdf61c65821
-        Step 5/8 : ADD payload/sampleconfig.tar.bz2 $FABRIC_CFG_PATH/
-        ---> 0a4b15c65c40
-        Step 6/8 : EXPOSE 7050
-        ---> Running in 35490870571a
-        Removing intermediate container 35490870571a
-        ---> 25122bbcbf1d
-        Step 7/8 : CMD ["orderer"]
-        ---> Running in 52c6b2bb5c5b
-        Removing intermediate container 52c6b2bb5c5b
-        ---> 5f1b61eaf6b5
-        Step 8/8 : LABEL org.hyperledger.fabric.version=1.0.3       org.hyperledger.fabric.base.version=0.3.2
-        ---> Running in c7726d44b815
-        Removing intermediate container c7726d44b815
-        ---> 04ae17fa19e1
-Successfully built 04ae17fa19e1
-Successfully tagged hyperledger/fabric-orderer:latest
-docker tag hyperledger/fabric-orderer hyperledger/fabric-orderer:x86_64-1.0.3
-touch build/image/orderer/.dummy-x86_64-1.0.3
-```
-
-- Output
-    - `hyperledger/fabric-orderer:latest` image, `hyperledger/fabric-orderer:x86_64-1.0.3` image
-        - From `hyperledger/fabric-baseos:x86_64-0.3.2`
-                - `FABRIC_CFG_PATH`: `/etc/hyperledger/fabric`
-                    - `/etc/hyperledger/fabric` created
-                    - `sampleconfig.tar.bz2` decompressed and unpacked `/etc/hyperledger/fabric`
-                - `/var/hyperledger/production` created
-                - `orderer` (**built using `baseimage`**) in `/usr/local/bin`
-                - `CMD ["orderer"]`
-### `build/image/%/payload`
-
-```bash
-Creating build/image/orderer/payload
-mkdir -p build/image/orderer/payload
-cp build/docker/bin/orderer build/sampleconfig.tar.bz2 build/image/orderer/payload
-```
-
-#### `build/image/orderer/payload`
-- Translates to
-	
-        ```bash
-        build/image/orderer/payload:    build/docker/bin/orderer \
-				build/sampleconfig.tar.bz2
-        ```
-
-##### 1. `build/docker/bin/orderer`
-- `build/docker/bin/%: $(PROJECT_FILES)`
-	
-        ```bash
-        Building build/docker/bin/orderer
-        mkdir -p build/docker/bin build/docker/orderer/pkg
-        docker run -i --rm --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/bin:/opt/gopath/bin \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/orderer/pkg:/opt/gopath/pkg \
-                hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                go install -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger -linkmode external -extldflags '-static -lpthread'" github.com/hyperledger/fabric/orderer
-        touch build/docker/bin/orderer
-        ```
-
-- Output
-    - `orderer` under `build/docker/bin`
-##### 2. `build/sampleconfig.tar.bz2: $(shell find sampleconfig -type f)`
-- See previous occurrence
-## 3. `ccenv` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-- By product of build `make peer` of `make peer-docker`
-## 4. `tools` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-
-```bash
-Building docker tools-image
-docker build  -t hyperledger/fabric-tools build/image/tools
-Sending build context to Docker daemon  70.33MB
-        Step 1/9 : FROM hyperledger/fabric-baseimage:x86_64-0.3.2
-        ---> c92d9fdee998
-        Step 2/9 : ENV FABRIC_CFG_PATH /etc/hyperledger/fabric
-        ---> Running in bc53d1465afb
-        Removing intermediate container bc53d1465afb
-        ---> 4d579746e8be
-        Step 3/9 : VOLUME /etc/hyperledger/fabric
-        ---> Running in feaeb28c1414
-        Removing intermediate container feaeb28c1414
-        ---> c7e38282a8b8
-        Step 4/9 : ADD  payload/sampleconfig.tar.bz2 $FABRIC_CFG_PATH
-        ---> ec222c5ca3fe
-        Step 5/9 : COPY payload/cryptogen /usr/local/bin
-        ---> 774b1c3b9878
-        Step 6/9 : COPY payload/configtxgen /usr/local/bin
-        ---> a45e9abe3ee3
-        Step 7/9 : COPY payload/configtxlator /usr/local/bin
-        ---> c4311ecc4923
-        Step 8/9 : COPY payload/peer /usr/local/bin
-        ---> 4b46dacffbe8
-        Step 9/9 : LABEL org.hyperledger.fabric.version=1.0.3       org.hyperledger.fabric.base.version=0.3.2
-        ---> Running in 0bf9529c3705
-        Removing intermediate container 0bf9529c3705
-        ---> cff0436b6747
-Successfully built cff0436b6747
-Successfully tagged hyperledger/fabric-tools:latest
-docker tag hyperledger/fabric-tools hyperledger/fabric-tools:x86_64-1.0.3
-touch build/image/tools/.dummy-x86_64-1.0.3
-```
-
-- Output
-    - `hyperledger/fabric-tools:latest` image, `hyperledger/fabric-tools:x86_64-1.0.3`
-                - `FABRIC_CFG_PATH`: `/etc/hyperledger/fabric`
-                    - `/etc/hyperledger/fabric` created
-                    - `sampleconfig.tar.bz2` decompressed and unpacked `/etc/hyperledger/fabric`
-                    - **`VOLUME /etc/hyperledger/fabric`**
-                        - > https://docs.docker.com/storage/volumes/
-                        - > https://www.cnblogs.com/51kata/p/5266626.html
-                        - > https://yeasy.gitbooks.io/docker_practice/image/dockerfile/volume.html
-                - `/var/hyperledger/production` created
-                - `cryptogen`, `configtxgen`, `configtxlator`, `peer` in `/usr/local/bin`
+- `/var/hyperledger/production` created
+## 2. `docker: build/image/orderer/$(DUMMY)`
+- `/var/hyperledger/production` created
+## 3. `docker: build/image/ccenv/$(DUMMY)`
+## 4. `docker: build/image/tools/$(DUMMY)`
+- **`VOLUME /etc/hyperledger/fabric`**
+    - > https://docs.docker.com/storage/volumes/
+    - > https://www.cnblogs.com/51kata/p/5266626.html
+    - > https://yeasy.gitbooks.io/docker_practice/image/dockerfile/volume.html
 - > `docker inspect cli | less`
 	
-        ```js
-        "Mounts": [
-            // ...
-            {
-                "Type": "volume",
-                "Name": "4e5c61b23b176078641fb8ac3a495c8cd6ca7e23620292709ce1b2be3c26678b",
-                "Source": "/var/lib/docker/volumes/4e5c61b23b176078641fb8ac3a495c8cd6ca7e23620292709ce1b2be3c26678b/_data",
-                "Destination": "/etc/hyperledger/fabric", // here
-                "Driver": "local",
-                "Mode": "",
-                "RW": true,
-                "Propagation": ""
-            },
-            // ...
-        ]
-        ```
+    ```js
+    "Mounts": [
+        // ...
+        {
+            "Type": "volume",
+            "Name": "4e5c61b23b176078641fb8ac3a495c8cd6ca7e23620292709ce1b2be3c26678b",
+            "Source": "/var/lib/docker/volumes/4e5c61b23b176078641fb8ac3a495c8cd6ca7e23620292709ce1b2be3c26678b/_data",
+            "Destination": "/etc/hyperledger/fabric", // here
+            "Driver": "local",
+            "Mode": "",
+            "RW": true,
+            "Propagation": ""
+        },
+        // ...
+    ]
+    ```
 
-### `build/image/%/payload`
+## 5. `docker: build/image/kafka/$(DUMMY)`
 
-```bash
-Creating build/image/tools/payload
-mkdir -p build/image/tools/payload
-cp build/docker/bin/cryptogen build/docker/bin/configtxgen build/docker/bin/configtxlator build/docker/bin/peer build/sampleconfig.tar.bz2 build/image/tools/payload
-```
+- Recipe
 
-#### `build/image/tools/payload`
-- Translates to
-	
-        ```bash
-        build/image/tools/payload:      build/docker/bin/cryptogen \
-	                        build/docker/bin/configtxgen \
-	                        build/docker/bin/configtxlator \
-				build/docker/bin/peer \
-				build/sampleconfig.tar.bz2
-        ```
+    ```bash
+    build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile
+	  $(eval TARGET = ${patsubst build/image/%/$(DUMMY),%,${@}})
+	  @echo "Building docker $(TARGET)-image"
+	  $(DBUILD) -t $(DOCKER_NS)/fabric-$(TARGET) $(@D)
+	  docker tag $(DOCKER_NS)/fabric-$(TARGET) $(DOCKER_NS)/  fabric-$(TARGET):$(DOCKER_TAG)
+	  touch $@
 
-##### 1. `build/docker/bin/cryptogen`
-- `build/docker/bin/%: $(PROJECT_FILES)`
+      build/image/%/payload
+        @echo "Creating $@"
+          mkdir -p $@
+          cp $^ $@
+      build/image/kafka/payload:      images/kafka/docker-entrypoint.sh \
+				images/kafka/kafka-run-class.sh
 
-        ```bash
-        Building build/docker/bin/cryptogen
-        mkdir -p build/docker/bin build/docker/cryptogen/pkg
-        docker run -i --rm --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/git
-        hub.com/hyperledger/fabric \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/bin:/opt/gopath/bin \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/cryptogen/pkg:/opt/gopath/pkg \
-                hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                go install -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion
-        =0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNa
-        mespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger -linkmode external -extldflags '-static -lpthread'"
-        github.com/hyperledger/fabric/common/tools/cryptogen
-        touch build/docker/bin/cryptogen
-        ```
+      build/image/%/Dockerfile: images/%/Dockerfile.in
+        @echo "creating Dockerfile"
+        @cat $< \
+            | sed -e 's/_BASE_NS_/$(BASE_DOCKER_NS)/g' \
+            | sed -e 's/_NS_/$(DOCKER_NS)/g' \
+            | sed -e 's/_BASE_TAG_/$(BASE_DOCKER_TAG)/g' \
+            | sed -e 's/_TAG_/$(DOCKER_TAG)/g' \
+            > $@
+        @echo LABEL $(BASE_DOCKER_LABEL).version=$(PROJECT_VERSION) \\>>$@
+        @echo "     " $(BASE_DOCKER_LABEL).base.version=$(BASEIMAGE_RELEASE)>>$@
+    ```
 
-##### 2. `build/docker/bin/configtxgen`
-- `build/docker/bin/%: $(PROJECT_FILES)`
-	
-        ```bash
-        mkdir -p build/docker/bin build/docker/configtxgen/pkg
-        docker run -i --rm --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/git
-        hub.com/hyperledger/fabric \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/bin:/opt/gopath/bin \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/configtxgen/pkg:/opt/gopath/pkg \
-                hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                go install -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger -linkmode external -extldflags '-static -lpthread'" github.com/hyperledger/fabric/common/configtx/tool/configtxgen
-        touch build/docker/bin/configtxgen
-        ```
-
-##### 3. `build/docker/bin/configtxlator`
-- `build/docker/bin/%: $(PROJECT_FILES)`
-	
-        ```bash
-        Building build/docker/bin/configtxlator
-        mkdir -p build/docker/bin build/docker/configtxlator/pkg
-        docker run -i --rm --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/bin:/opt/gopath/bin \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/configtxlator/pkg:/opt/gopath/pkg \
-                hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                go install -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger -linkmode external -extldflags '-static -lpthread'" github.com/hyperledger/fabric/common/tools/configtxlator
-        touch build/docker/bin/configtxlator
-        ```
-
-##### 4. `build/docker/bin/peer`
-- See previous occurrence
-##### 5. `build/sampleconfig.tar.bz2`
-- See previous occurrence
-## 5. `kafka` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-
-## 6. `zookeeper` - `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
+## 6. `docker: build/image/zookeeper/$(DUMMY)`
 
 # `make release`
+- Recipe
+
+    ```bash
+    # MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
+    release: $(patsubst %,release/%, $(MARCH))
+
+      release/%: GO_LDFLAGS=-X $(pkgmap.$(@F))/metadata.Version=$  (PROJECT_VERSION)
+
+      release/%-amd64: DOCKER_ARCH=x86_64
+      release/%-amd64: GOARCH=amd64
+      release/linux-%: GOOS=linux
+  
+      # linux-amd64
+      release/linux-amd64: GOOS=linux
+      release/linux-amd64: GO_TAGS+= nopkcs11
+      # RELEASE_PKGS = configtxgen cryptogen configtxlator peer orderer
+      release/linux-amd64: $(patsubst %,release/linux-amd64/bin/%, $  (RELEASE_PKGS)) release/linux-amd64/install
+        
+        release/%/bin/configtxgen: $(PROJECT_FILES)
+            @echo "Building $@ for $(GOOS)-$(GOARCH)"
+            mkdir -p $(@D)
+            $(CGO_FLAGS) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(abspath $@) -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
+
+        # etc..
+
+        release/%/install: $(PROJECT_FILES)
+            mkdir -p $(@D)/bin
+            # pull docker images
+
+              # ifneq ($(IS_RELEASE),true)
+              # EXTRA_VERSION ?= snapshot-$(shell git rev-parse --short HEAD)
+              # PROJECT_VERSION=$(BASE_VERSION)-$(EXTRA_VERSION)
+              # else
+              # PROJECT_VERSION=$(BASE_VERSION)
+              # endif
+              # BASE_VERSION = 1.0.3
+              # EXTRA_VERSION ?= snapshot-298322489
+
+
+            @cat $(@D)/../templates/get-docker-images.in \
+                | sed -e 's/_NS_/$(DOCKER_NS)/g' \
+                | sed -e 's/_ARCH_/$(DOCKER_ARCH)/g' \
+                | sed -e 's/_VERSION_/$(PROJECT_VERSION)/g' \
+                | sed -e 's/_BASE_DOCKER_TAG_/$(BASE_DOCKER_TAG)/g' \
+                > $(@D)/bin/get-docker-images.sh
+                @chmod +x $(@D)/bin/get-docker-images.sh
+
+            # downloads the build your first network sample app 
+            @cat $(@D)/../templates/get-byfn.in \
+                | sed -e 's/_VERSION_/$(PROJECT_VERSION)/g' \
+                > $(@D)/bin/get-byfn.sh
+                @chmod +x $(@D)/bin/get-byfn.sh
+    ```
