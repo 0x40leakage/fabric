@@ -375,6 +375,7 @@ release/%/bin/peer: $(PROJECT_FILES)
 	$(CGO_FLAGS) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(abspath $@) -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
 
 release/%/install: $(PROJECT_FILES)
+	@echo "$(PROJECT_VERSION)"
 	mkdir -p $(@D)/bin
 	@cat $(@D)/../templates/get-docker-images.in \
 		| sed -e 's/_NS_/$(DOCKER_NS)/g' \
