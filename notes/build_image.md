@@ -1,15 +1,41 @@
-- `$(patsubst pattern,replacement,text)`
-    - Finds whitespace-separated words in `text` that match `pattern` and replaces them with `replacement`.
-    - `pattern` may contain a ‘%’ which acts as a wildcard, matching any number of any characters within a word. If `replacement` also contains a ‘%’, the ‘%’ is replaced by the text that matched the ‘%’ in `pattern`.
-        - Only the first ‘%’ in the `pattern` and `replacement` is treated this way; any subsequent ‘%’ is unchanged.
-- `$(subst from,to,text)`
-    - Performs a textual replacement on the text `text`: each occurrence of `from` is replaced by `to`. The result is substituted for the function call.
-- `abspath`
-- > https://www.gnu.org/software/make/manual/html_node/Text-Functions.html
-- `$^` - The names of **all the prerequisites**, with spaces between them
+- [Text functions](https://www.gnu.org/software/make/manual/html_node/Text-Functions.html)
+    - `$(patsubst pattern,replacement,text)`
+        - Finds whitespace-separated words in `text` that match `pattern` and replaces them with `replacement`.
+        - `pattern` may contain a ‘%’ which acts as a wildcard, matching any number of any characters within a word. If `replacement` also contains a ‘%’, the ‘%’ is replaced by the text that matched the ‘%’ in `pattern`.
+            - Only the first ‘%’ in the `pattern` and `replacement` is treated this way; any subsequent ‘%’ is unchanged.
+    - `$(subst from,to,text)`
+        - Performs a textual replacement on the text `text`: each occurrence of `from` is replaced by `to`. The result is substituted for the function call.
+- [File name functions](https://www.gnu.org/software/make/manual/html_node/File-Name-Functions.html)
+    - `abspath`
+        - For each file name in names return an absolute name that does not contain any `.` or `..` components, nor any repeated path separators (`/`). Note that, in contrast to `realpath` function, `abspath` does not resolve symlinks and does not require the file names to refer to an existing file or directory. Use the wildcard function to test for existence.
+- *[Automatic Variables](https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html)*
+    - `$@`
+        - The file name of the target of the rule
+        - If the target is an archive member, then `$@` is the name of the archive file
+        - In a pattern rule that has multiple targets (see Introduction to Pattern Rules), `$@` is the name of whichever target caused the rule’s recipe to be run.
+    - `$^` 
+        - The names of **all the prerequisites**, with spaces between them
+            - A target has only one prerequisite on each other file it depends on, no matter how many times each file is listed as a prerequisite. So if you list a prerequisite more than once for a target, the value of `$^` contains just one copy of the name
+        - For prerequisites which are archive members, only the named member is used (see Archives)
+        - This list does not contain any of the order-only prerequisites; for those see the `$|` variable
+    - `$<`
+        - The name of the **first prerequisite**
+        - If the target got its recipe from an implicit rule, this will be the first prerequisite added by the implicit rule (see Implicit Rules).
+    - `$(@F)`
+        - The file-within-directory part of the file name of the target
+            - If the value of `$@` is `dir/foo.o` then `$(@F)` is `foo.o`
+        - `$(@F)` is equivalent to `$(notdir $@)`
+    - `$(@D)`
+        - The **directory part** of the file name of the target, with the **trailing slash removed**
+            - If the value of `$@` is `dir/foo.o` then `$(@D)` is `dir`
+        - This value is `.` if `$@` does not contain a slash
+- **不同 target，prerequisites 不同，但是 commands 可以套同一个模板，所以对某一个 target， prerequisites 单独写，commands 套用模板**
+    - 没有命令的 `make` 规则下面不要加 `@echo` 来打印日志，会覆盖通用的命令模板！
+- `make native` 和 `make docker` 都会编二进制，因 host 环境和 docker 容器的环境大概率不同，此处不加判断无差别
+- **target 通常是文件名，或是伪目标 (`.PHONY`)**
+- [ ] Why isn't `native`, `docker`, `all`, etc., declared as `.PHONY`?
+
 - [ ] `sed`
-- 没有命令的 `make` 规则下面不要加 `@echo` 来打印日志
-- `make native` 和 `make docker` 都会编二进制，因 host 环境和 docker 容器的环境大概率不同，此处不加判断无差别重新编
 ---
 - `Makefile`
     - `images/%/Dockerfile.in`
@@ -20,138 +46,146 @@
     - > `make all 2>&1 | tee makefile.log`
 # `make native`
 - `native: peer orderer configtxgen cryptogen configtxlator`
-- **Payload Definition**
 ## 1. `peer: build/bin/peer`
-### `build/bin/peer: build/image/ccenv/$(DUMMY)`
-- `build/bin/%: $(PROJECT_FILES)`
-
-        ```bash
-        mkdir -p build/bin
-        build/bin/peer
-        CGO_CFLAGS=" " GOBIN=/home/centos/go/src/github.com/hyperledger/fabric/build/bin go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger" github.com/hyperledger/fabric/peer
-        Binary available as build/bin/peer
-        ```
-
 - Output
-    - `peer` under `./build/bin`
-#### `build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile`
-
-```bash
-Building docker ccenv-image
-docker build  -t hyperledger/fabric-ccenv build/image/ccenv
-Sending build context to Docker daemon  21.14MB
-        Step 1/5 : FROM hyperledger/fabric-baseimage:x86_64-0.3.2
-        ---> c92d9fdee998
-        Step 2/5 : COPY payload/chaintool payload/protoc-gen-go /usr/local/bin/
-        ---> Using cache
-        ---> 78d19721f083
-        Step 3/5 : ADD payload/goshim.tar.bz2 $GOPATH/src/
-        ---> Using cache
-        ---> c26153a17433
-        Step 4/5 : RUN mkdir -p /chaincode/input /chaincode/output
-        ---> Using cache
-        ---> 548ad31da9d5
-        Step 5/5 : LABEL org.hyperledger.fabric.version=1.0.3       org.hyperledger.fabric.base.version=0.3.2
-        ---> Using cache
-        ---> b23f08c59f30
-Successfully built b23f08c59f30
-Successfully tagged hyperledger/fabric-ccenv:latest
-docker tag hyperledger/fabric-ccenv hyperledger/fabric-ccenv:x86_64-1.0.3
-touch build/image/ccenv/.dummy-x86_64-1.0.3
-```
-
-- Output
-        - `hyperledger/fabric-ccenv:latest` image, `hyperledger/fabric-ccenv:x86_64-1.0.3` image
-                - `chaintool`, `protoc-gen-go` under `/usr/local/bin/`; `goshim.tar.bz2` decompressed and unpacked into `$GOPATH/src/`
-##### 1. `build/image/%/payload`
-- Translates to
+    - 6: `protoc-gen-go`, `govendor` under `./build/docker/gotools/bin`
+        - `./build/docker/gotools/obj/gopath` holds the temporary `GOPATH` for inside the container
+        - Volume
+            - `./fabric/build/docker/gotools:/opt/gotools`
+            - `./fabric:/opt/gopath/src/github.com/hyperledger`
+    - 5
+        - 5.1: see 6
+        - 5.2: `chaintool` under `./build/bin`
+        - 5.3: `goshim.tar.bz2` under `./build`
+    - 4
+        - 4.1: `build/image/ccenv/payload` directory created; `protoc-gen-go` (no `govendor` and such), `chaintool`, `goshim.tar.bz2` under `./build/image/ccenv/payload`
+        - 4.2: `Dockerfile` under `./build/image/ccenv`
+    - 3: `.dummy-x86_64-1.0.3` under `./build/image/ccenv`; `hyperledger/fabric-ccenv:latest` image, `hyperledger/fabric-ccenv:x86_64-1.0.3` image
+        - Container-wise: `chaintool`, `protoc-gen-go` under `/usr/local/bin/`; `goshim.tar.bz2` decompressed and unpacked into `$GOPATH/src/`
+    - 2: `peer` under `./build/bin`
+- Recipe
 	
         ```makefile
-        # payload definition
-        build/image/ccenv/payload:      build/docker/gotools/bin/protoc-gen-go \
-				        build/bin/chaintool \
-				        build/goshim.tar.bz2
-        # Try 
-        # make build/image/ccenv/payload 
+        # 1. .PHONY: peer
+        peer: build/bin/peer
+          ## 2.1 special prerequisites of its own
+          build/bin/peer: build/image/ccenv/$(DUMMY)
+            ### 3. general recipe (both prerequisites and commands)
+            build/image/%/$(DUMMY): Makefile build/image/%/payload build/image/%/Dockerfile
+              $(eval TARGET = ${patsubst build/image/%/$(DUMMY),%,${@}})
+              @echo "Building docker $(TARGET)-image"
+              $(DBUILD) -t $(DOCKER_NS)/fabric-$(TARGET) $(@D)
+              docker tag $(DOCKER_NS)/fabric-$(TARGET) $(DOCKER_NS)/fabric-$(TARGET):$(DOCKER_TAG)
+              touch $@
+
+              #### 4.1 separated prerequisites and commands
+                ##### 4.1.1 required prerequisites 
+                build/image/ccenv/payload:      build/docker/gotools/bin/protoc-gen-go \
+				                build/bin/chaintool \
+				                build/goshim.tar.bz2
+                  ###### 5.1 purpose to to make protoc-gen-go (with other tools also specified in GOTOOLS as by product)
+                  build/docker/gotools/bin/protoc-gen-go: build/docker/gotools
+                    ####### 6. analyse later
+                    build/docker/gotools: gotools/Makefile
+                      mkdir -p $@/bin $@/obj
+                      $(DRUN) \
+                          -v $(abspath $@):/opt/gotools \
+                          -w /opt/gopath/src/$(PKGNAME)/gotools \
+                          $(BASE_DOCKER_NS)/fabric-baseimage:$(BASE_DOCKER_TAG) \
+                          make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj
+
+                  ###### 5.2
+                  %/chaintool: Makefile
+                    @echo "Installing chaintool"
+                    mkdir -p $(@D)
+                    cp ./cached/hyperledger-fabric-chaintool-1.0.0.jar $@
+                    chmod +x $@
+                  ###### 5.3
+                  build/goshim.tar.bz2: $(GOSHIM_DEPS)
+                    @echo "Creating $@"
+                    @tar -jhc -C $(GOPATH)/src $(patsubst $(GOPATH)/src/%,%,$(GOSHIM_DEPS)) > $@
+
+                ##### 4.1.2 command
+                build/image/%/payload:
+                  @echo "Creating $@"
+                  mkdir -p $@
+                  cp $^ $@    
+
+              #### 4.2 purpose is to create the target (a file); prerequisites exist, go straight to execute the command
+              build/image/%/Dockerfile: images/%/Dockerfile.in
+                @cat $< \
+                        | sed -e 's/_BASE_NS_/$(BASE_DOCKER_NS)/g' \
+                        | sed -e 's/_NS_/$(DOCKER_NS)/g' \
+                        | sed -e 's/_BASE_TAG_/$(BASE_DOCKER_TAG)/g' \
+                        | sed -e 's/_TAG_/$(DOCKER_TAG)/g' \
+                        > $@
+                @echo LABEL $(BASE_DOCKER_LABEL).version=$(PROJECT_VERSION) \\>>$@
+                @echo "     " $(BASE_DOCKER_LABEL).base.version=$(BASEIMAGE_RELEASE)>>$@ 
+              #### 4.3 exists (common file)
+              Makefile
+
+          ## 2.2 general recipe of command
+          build/bin/%: $(PROJECT_FILES)
+            @echo
+	    mkdir -p $(@D)
+	    @echo "$@"
+	    $(CGO_FLAGS) GOBIN=$(abspath $(@D)) go install -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
+	    @echo "Binary available as $@"
+	    @touch $@
         ```
 
-- `build/image/%/payload`
+- `make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj`
 	
-        ```bash
-        Creating build/image/ccenv/payload
-        mkdir -p build/image/ccenv/payload
-        cp build/docker/gotools/bin/protoc-gen-go build/bin/chaintool build/goshim.tar.bz2 build/image/ccenv/payload
-        ```
-
-###### 1. `build/docker/gotools/bin/protoc-gen-go: build/docker/gotools`
-- `build/docker/gotools: gotools/Makefile`
-
-        ```bash
-        mkdir -p build/docker/gotools/bin build/docker/gotools/obj
-
+        ```makefile
         docker run -i --rm --user=1000 
                 # flags from from $(DRUN)
                 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric \
                 -w /opt/gopath/src/github.com/hyperledger/fabric \
-                # flags from build/docker/gotools
+
                 -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/gotools:/opt/gotools \
                 # gotool/Makefile at work; override work directory
                 -w /opt/gopath/src/github.com/hyperledger/fabric/gotools \
                 # pull if not exists. https://github.com/hyperledger/fabric-baseimage
                 hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                # **inside baseimage container**
+                # **inside baseimage container** (override default flags: BINDIR ?= /usr/local/bin; OBJDIR ?= build)
                 make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj
+                # BINDIR=/opt/gotools/bin: 解决 cp 权限问题
 
 
-                ## GOBIN: /opt/gotools/obj/gopath/bin, GOTOOLS_BIN: /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/obj/gopath/bin/govendor
+        # 1. GOTOOLS_BIN: /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/obj/gopath/bin/govendor
+        install: $(GOTOOLS_BIN)
+	  mkdir -p $(BINDIR)
+	  cp $^ $(BINDIR) # BINDER: /opt/gotools/bin (explicitly passed in, NOT from BINDIR ?= /usr/local/bin)
 
-                make gotool.protoc-gen-go
-                # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-                # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
-                # mkdir -p /opt/gotools/obj/gopath/src/github.com/golang/protobuf/
-                # cp -R /opt/gopath/src/github.com/hyperledger/fabric/vendor/github.com/golang/protobuf/* /opt/gotools/obj/gopath/src/github.com/golang/protobuf
-                # GOPATH=/opt/gotools/obj/gopath go install github.com/golang/protobuf/protoc-gen-go
-                # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
+          ## 2. GOBIN: /opt/gotools/obj/gopath/bin
+          $(GOBIN)/%:
+	    @echo "GOBIN: $(GOBIN), GOTOOLS_BIN: $(GOTOOLS_BIN)"
+	    $(eval TOOL = ${subst $(GOBIN)/,,${@}})
+	    $(MAKE) gotool.$(TOOL)
 
-                make gotool.govendor
-                # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-                # Building github.com/kardianos/govendor -> govendor
-                # GOPATH=/opt/gotools/obj/gopath go get github.com/kardianos/govendor
+            ### 3.1 Special override for protoc-gen-go since we want to use the version vendored with the project
+            gotool.protoc-gen-go:
+              @echo "Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go"
+              mkdir -p $(TMP_GOPATH)/src/github.com/golang/protobuf/
+              cp -R $(GOPATH)/src/github.com/hyperledger/fabric/vendor/github.com/golang/protobuf/* $(TMP_GOPATH)/src/github.com/golang/protobuf
+              GOPATH=$(abspath $(TMP_GOPATH)) go install github.com/golang/protobuf/protoc-gen-go
+              @echo
 
-                ## corresponding to make install
-                # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-                # mkdir -p /opt/gotools/bin
-                # cp /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/obj/gopath/bin/govendor /opt/gotools/bin
+            ### 3.2 Default rule for gotools uses the name->path map for a generic 'go get' style build
+            gotool.%:
+              $(eval TOOL = ${subst gotool.,,${@}})
+              @echo "Building ${go.fqp.${TOOL}} -> $(TOOL)"
+              GOPATH=$(abspath $(TMP_GOPATH)) go get ${go.fqp.${TOOL}}
+              @echo
         ```
 
-- Output
-    - `protoc-gen-go`, `govendor` under `./build/docker/gotools/bin`
-    - > `./build/docker/gotools/obj/gopath` holds the temporary `GOPATH` inside the container
-    - > Volume
-        - `./fabric/build/docker/gotools:/opt/gotools`
-        - `./fabric:/opt/gopath/src/github.com/hyperledger`
-- > Q
+- Q
 
         ```bash
-        # [x] Why is this command executed first when `make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj`?
-        # $(GOBIN)/%:
-        #   $(eval TOOL = ${subst $(GOBIN)/,,${@}}) # 去掉 $(GOBIN)/ 部分
-        #	$(MAKE) gotool.$(TOOL)
+        # OBJDIR=/opt/gotools/obj: 
 
-        # install: $(GOTOOLS_BIN)
-        # $(GOBIN)/% is wildcard for $(GOTOOLS_BIN)
-
-        ## GOBIN: /opt/gotools/obj/gopath/bin, GOTOOLS_BIN: /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/obj/gopath/bin/govendor
-
-
-        mkdir -p build/docker/gotools/bin build/docker/gotools/obj
-        docker run -it --user=1000 -v /home/centos/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
-                -v /home/centos/go/src/github.com/hyperledger/fabric/build/docker/gotools:/opt/gotools \
-                -w /opt/gopath/src/github.com/hyperledger/fabric/gotools \
-                hyperledger/fabric-baseimage:x86_64-0.3.2 \
-                bash
-
-        make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj # odd command selection (with OBJDIR)
+        # run inside baseimage container
+        make install BINDIR=/opt/gotools/bin OBJDIR=/opt/gotools/obj # with OBJDIR
         # make gotool.protoc-gen-go
         # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
         # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
@@ -159,94 +193,67 @@ touch build/image/ccenv/.dummy-x86_64-1.0.3
         # mkdir -p /opt/gotools/bin
         # cp /opt/gotools/obj/gopath/bin/protoc-gen-go /opt/gotools/bin
 
-        make install OBJDIR=/opt/gotools/obj # odd command selection (with OBJDIR)
-        # make gotool.protoc-gen-go
-        # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-        # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
-        # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
-        # mkdir -p /usr/local/bin
+        make install OBJDIR=/opt/gotools/obj # with OBJDIR
+          # make gotool.protoc-gen-go
+          # make[1]: Entering directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
+          # Building github.com/golang/protobuf/protoc-gen-go -> protoc-gen-go
+          # make[1]: Leaving directory '/opt/gopath/src/github.com/hyperledger/fabric/gotools'
+          # mkdir -p /usr/local/bin
+        
         # cp /opt/gotools/obj/gopath/bin/protoc-gen-go /usr/local/bin
         # cp: cannot create regular file '/usr/local/bin/protoc-gen-go': Permission denied
-        # Makefile:36: recipe for target 'install' failed
-        # make: *** [install] Error 1
+
+          # Makefile:36: recipe for target 'install' failed
+          # make: *** [install] Error 1
 
         make install BINDIR=/opt/gotools/bin
         # mkdir -p /opt/gotools/bin
         # cp /opt/gopath/src/github.com/hyperledger/fabric/gotools/build/gopath/bin/protoc-gen-go /opt/gotools/bin
 
         make install
-        # mkdir -p /usr/local/bin
-        # cp /opt/gopath/src/github.com/hyperledger/fabric/gotools/build/gopath/bin/protoc-gen-go /usr/local/bin
+          # mkdir -p /usr/local/bin
+          # cp /opt/gopath/src/github.com/hyperledger/fabric/gotools/build/gopath/bin/protoc-gen-go /usr/local/bin
         # cp: cannot create regular file '/usr/local/bin/protoc-gen-go': Permission denied
-        # Makefile:36: recipe for target 'install' failed
-        # make: *** [install] Error 1
+          # Makefile:36: recipe for target 'install' failed
+          # make: *** [install] Error 1
         ```
 
-###### 2. `%/chaintool: Makefile`
-
-```bash
-Installing chaintool
-mkdir -p build/bin
-# curl -fL https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric/chaintool-1.0.0/hyperledger-fabric-chaintool-1.0.0.jar > build/bin/chaintool
-cp ./cached/hyperledger-fabric-chaintool-1.0.0.jar build/bin/chaintool
-chmod +x build/bin/chaintool
-```
-
-- Output
-        - `chaintool` under `./build/bin`
-###### 3. `build/goshim.tar.bz2: $(GOSHIM_DEPS)`
-
-```bash
-Creating build/goshim.tar.bz2
-@tar -jhc -C $(GOPATH)/src $(patsubst $(GOPATH)/src/%,%,$(GOSHIM_DEPS)) > $@
-
-# GOSHIM_DEPS: ./scripts/goListFiles.sh github.com/hyperledger/fabric/core/chaincode/shim | less
-# 获取 github.com/hyperledger/fabric/core/chaincode/shim 的所有依赖库
-
-# $(patsubst $(GOPATH)/src/%,%,$(GOSHIM_DEPS)): 去掉依赖库路径的 $(GOPAHT)/src 部分
-
-# 切换到 $(GOPATH)/src 为了可以用（没有 $(GOPAHT)/src 部分）相对路径指定依赖库的目录
-        # When -C is specified, tar will change its current directory to DIR before performing any operations. When this option is used during archive creation, it is order sensitive.
-```
-
-- Output
-    - `goshim.tar.bz2` under `./build`
-##### 2. `build/image/%/Dockerfile: images/%/Dockerfile.in`
 ## 2. `orderer: build/bin/orderer`
-- `build/bin/%: $(PROJECT_FILES)`
-	
-        ```bash
-        mkdir -p build/bin
-        build/bin/orderer
-        CGO_CFLAGS=" " GOBIN=/home/centos/go/src/github.com/hyperledger/fabric/build/bin go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.0.3 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.3.2 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger" github.com/hyperledger/fabric/orderer
-        Binary available as build/bin/orderer
-        ```
-
 - Output
     - `orderer` under `./build/bin`
-## `configtxgen: build/bin/configtxgen`, `cryptogen: build/bin/cryptogen`, `configtxlator: build/bin/configtxlator`
-- `build/bin/%: $(PROJECT_FILES)`
+- Recipe
 	
         ```bash
-        ## go install flags specified in its own separate rule
-        mkdir -p build/bin
-        build/bin/configtxgen
-        CGO_CFLAGS=" " GOBIN=/home/centos/go/src/github.com/hyperledger/fabric/build/bin go install -tags "nopkcs11" -ldflags "-X github.com/hyperledger/fabric/common/configtx/tool/configtxgen/metadata.Version=1.0.3" github.com/hyperledger/fabric/common/configtx/tool/configtxgen
-        Binary available as build/bin/configtxgen
-
-        mkdir -p build/bin
-        build/bin/cryptogen
-        CGO_CFLAGS=" " GOBIN=/home/centos/go/src/github.com/hyperledger/fabric/build/bin go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/tools/cryptogen/metadata.Version=1.0.3" github.com/hyperledger/fabric/common/tools/cryptogen
-        Binary available as build/bin/cryptogen
-
-        mkdir -p build/bin
-        build/bin/configtxlator
-        CGO_CFLAGS=" " GOBIN=/home/centos/go/src/github.com/hyperledger/fabric/build/bin go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/tools/configtxlator/metadata.Version=1.0.3" github.com/hyperledger/fabric/common/tools/configtxlator
-        Binary available as build/bin/configtxlator
+        # 1. .PHONY: orderer
+        orderer: build/bin/orderer
+          # 2.
+          build/bin/%: $(PROJECT_FILES)
+	    @echo
+	    mkdir -p $(@D)
+	    @echo "$@"
+	    $(CGO_FLAGS) GOBIN=$(abspath $(@D)) go install -tags "$(GO_TAGS)"     -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
+	    @echo "Binary available as $@"
+	    @touch $@
         ```
 
+## `configtxgen: build/bin/configtxgen`, `cryptogen: build/bin/cryptogen`, `configtxlator: build/bin/configtxlator`
 - Output
-    - `configtxgen`, `cryptogen`, `configtxlator` under `./build/bin`
+    - `configtxgen`, `cryptogen`, `configtxlator` under `./build/bin` (`GOBIN`)
+- Recipe
+
+    ```bash
+    # 1. .PHONY: configtxgen
+    configtxgen: GO_TAGS+= nopkcs11
+    configtxgen: GO_LDFLAGS=-X $(pkgmap.$(@F))/metadata.Version=$(PROJECT_VERSION)
+    configtxgen: build/bin/configtxgen
+      # 2. build/bin/%: $(PROJECT_FILES)
+        @echo
+        mkdir -p $(@D)
+        $(CGO_FLAGS) GOBIN=$(abspath $(@D)) go install -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
+        @echo "Binary available as $@"
+        @touch $@
+    ```
+
 # `make docker`
 - `docker: $(patsubst %,build/image/%/$(DUMMY), $(IMAGES))`
         - `IMAGES = peer orderer ccenv tools kafka zookeeper`

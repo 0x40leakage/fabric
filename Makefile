@@ -235,7 +235,6 @@ build/image/peer/$(DUMMY): build/image/ccenv/$(DUMMY)
 build/bin/%: $(PROJECT_FILES)
 	@echo
 	mkdir -p $(@D)
-	@echo "$@"
 	$(CGO_FLAGS) GOBIN=$(abspath $(@D)) go install -tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)" $(pkgmap.$(@F))
 	@echo "Binary available as $@"
 	@touch $@
@@ -277,6 +276,7 @@ build/image/%/payload:
 .PRECIOUS: build/image/%/Dockerfile
 
 build/image/%/Dockerfile: images/%/Dockerfile.in
+	@echo "creating Dockerfile"
 	@cat $< \
 		| sed -e 's/_BASE_NS_/$(BASE_DOCKER_NS)/g' \
 		| sed -e 's/_NS_/$(DOCKER_NS)/g' \
