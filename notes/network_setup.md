@@ -45,4 +45,6 @@
 ```bash
 # FABRIC_ROOT: /home/centos/go/src/github.com/hyperledger/fabric
 # FABRIC_CFG_PATH: /home/centos/go/src/github.com/hyperledger/fabric/examples/e2e_cli
+
+# make -C $FABRIC_ROOT release
 ```
