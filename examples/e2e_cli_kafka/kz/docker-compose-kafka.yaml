@@ -1,0 +1,187 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+networks:
+  default:
+
+services:
+  zookeeper0:
+    container_name: zookeeper0
+    restart: always
+    image: hyperledger/fabric-zookeeper:x86_64-1.0.3
+    environment:
+        - ZOO_MY_ID=1
+        # [ ]
+        - ZOO_SERVERS=server.1=0.0.0.0:2888:3888 server.2=zookeeper1:2889:3889 server.3=zookeeper2:2890:3890
+    ports:
+        - 2181:2181
+        - 2888:2888
+        - 3888:3888
+    extra_hosts:
+        - "zookeeper0:192.168.9.126"
+        - "zookeeper1:192.168.9.127"
+        - "zookeeper2:192.168.9.127"
+
+  zookeeper1:
+    container_name: zookeeper1
+    restart: always
+    image: hyperledger/fabric-zookeeper:x86_64-1.0.3
+    environment:
+        - ZOO_MY_ID=2
+        - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zookeeper2:2890:3890
+    ports:
+        - 2182:2181
+        - 2889:2888
+        - 3889:3888
+    extra_hosts:
+        - "zookeeper0:192.168.9.126"
+        - "zookeeper1:192.168.9.127"
+        - "zookeeper2:192.168.9.127"
+
+  zookeeper2:
+      container_name: zookeeper2
+      restart: always
+      image: hyperledger/fabric-zookeeper:x86_64-1.0.3
+      environment:
+          - ZOO_MY_ID=3
+          - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=zookeeper1:2889:3889 server.3=0.0.0.0:2888:3888
+      ports:
+          - 2183:2181
+          - 2890:2888
+          - 3890:3888
+      extra_hosts:
+          - "zookeeper0:192.168.9.126"
+          - "zookeeper1:192.168.9.127"
+          - "zookeeper2:192.168.9.127"
+
+  kafka0:
+      image: hyperledger/fabric-kafka:x86_64-1.0.3
+      container_name: kafka0
+      restart: always
+      # [ ]
+      environment:
+          - KAFKA_LOG_RETENTION_MS=-1
+          - KAFKA_MESSAGE_MAX_BYTES=103809024 # 99 * 1024 * 1024 B
+          - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+          - KAFKA_BROKER_ID=0
+          - KAFKA_LISTENERS=PLAINTEXT://:9092
+          - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka0:9092
+          - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183
+          - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+          - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+          - KAFKA_MIN_INSYNC_REPLICAS=2
+      ports:
+          - 9092:9092
+      # volumes:
+          # - ../data/kafka0/logs:/opt/kafka/logs
+          # - ../data/kafka0/kafka-logs:/tmp/kafka-logs
+      extra_hosts:
+          - "zookeeper0:192.168.9.126"
+          - "zookeeper1:192.168.9.127"
+          - "zookeeper2:192.168.9.127"
+          - "kafka0:192.168.9.126"
+          - "kafka1:192.168.9.126"
+          - "kafka2:192.168.9.127"
+          - "kafka3:192.168.9.127"
+
+  kafka1:
+      image: hyperledger/fabric-kafka:x86_64-1.0.3
+      container_name: kafka1
+      restart: always
+      environment:
+          - KAFKA_LOG_RETENTION_MS=-1
+          - KAFKA_MESSAGE_MAX_BYTES=103809024
+          - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+          - KAFKA_BROKER_ID=1
+          - KAFKA_LISTENERS=PLAINTEXT://:9093
+          - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka1:9093
+          - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183
+          - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+          - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+          - KAFKA_MIN_INSYNC_REPLICAS=2
+      ports:
+          - 9093:9093
+      # volumes:
+          # - ../data/kafka1/logs:/opt/kafka/logs
+          # - ../data/kafka1/kafka-logs:/tmp/kafka-logs
+      extra_hosts:
+          - "zookeeper0:192.168.9.126"
+          - "zookeeper1:192.168.9.127"
+          - "zookeeper2:192.168.9.127"
+          - "kafka0:192.168.9.126"
+          - "kafka1:192.168.9.126"
+          - "kafka2:192.168.9.127"
+          - "kafka3:192.168.9.127"
+
+  kafka2:
+      image: hyperledger/fabric-kafka:x86_64-1.0.3
+      container_name: kafka2
+      restart: always
+      environment:
+          - KAFKA_LOG_RETENTION_MS=-1
+          - KAFKA_MESSAGE_MAX_BYTES=103809024
+          - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+          - KAFKA_BROKER_ID=2
+          - KAFKA_LISTENERS=PLAINTEXT://:9094
+          - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9094
+          - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183         
+          - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+          - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+          - KAFKA_MIN_INSYNC_REPLICAS=2
+      ports:
+          - 9094:9094
+      # volumes:
+          # - ../data/kafka2/logs:/opt/kafka/logs
+          # - ../data/kafka2/kafka-logs:/tmp/kafka-logs
+      extra_hosts:
+          - "zookeeper0:192.168.9.126"
+          - "zookeeper1:192.168.9.127"
+          - "zookeeper2:192.168.9.127"
+          - "kafka0:192.168.9.126"
+          - "kafka1:192.168.9.126"
+          - "kafka2:192.168.9.127"
+          - "kafka3:192.168.9.127"
+
+  kafka3:
+      image: hyperledger/fabric-kafka:x86_64-1.0.3
+      container_name: kafka3
+      restart: always
+      environment:
+          - KAFKA_LOG_RETENTION_MS=-1
+          - KAFKA_MESSAGE_MAX_BYTES=103809024
+          - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+          - KAFKA_BROKER_ID=3
+          - KAFKA_LISTENERS=PLAINTEXT://:9095
+          - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka3:9095
+          - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183         
+          - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+          - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+          - KAFKA_MIN_INSYNC_REPLICAS=2
+      ports:
+          - 9095:9095
+      # volumes:
+          # - ../data/kafka2/logs:/opt/kafka/logs
+          # - ../data/kafka2/kafka-logs:/tmp/kafka-logs
+      extra_hosts:
+          - "zookeeper0:192.168.9.126"
+          - "zookeeper1:192.168.9.127"
+          - "zookeeper2:192.168.9.127"
+          - "kafka0:192.168.9.126"
+          - "kafka1:192.168.9.126"
+          - "kafka2:192.168.9.127"
+          - "kafka3:192.168.9.127"
+
+# echo stat | nc 192.168.9.126 2181
+# echo stat | nc 192.168.9.127 2182
+# echo stat | nc 192.168.9.127 2183
+
+# nc 192.168.9.127 
+# 2182
+
+# inside zk container
+# echo stat | nc zookeeper2 2183
+# echo stat | nc zookeeper1 2182
+# echo stat | nc zookeeper0 2181

@@ -23,9 +23,17 @@
 
 - https://hyperledger-fabric.readthedocs.io/en/latest/commands/configtxlator.html
 # `cryptogen`
+- Generates the x509 certificates used to identify and authenticate the various components in the network.
 - `./common/tools/cryptogen`
+- `cryptogen` consumes a file - ``crypto-config.yaml`` - that contains the network topology and allows us to generate a library of certificates for both the organizations and the components that belong to those organizations. 
+    - Each organization is provisioned a unique root certificate (``ca-cert``), that binds specific components (peers and orderers) to that org.
+    - Transactions and communications within Fabric are signed by an entity's private key (``keystore``), and then verified by means of a public key (``signcerts``). 
+    - You will notice a `count` variable within this file. We use this to specify the number of peers per Organization.
+        - In our case it's two peers per Org. The rest of this template is extremely self-explanatory.
+
 - `$CRYPTOGEN generate --config=./crypto-config.yaml`
 # `configtxgen`
+- Generates the requisite configuration artifacts for orderer bootstrap and channel creation.
 - `./fabric/common/configtx/tool/configtxgen`
 - `$CONFIGTXGEN -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block`
 - `$CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME`
