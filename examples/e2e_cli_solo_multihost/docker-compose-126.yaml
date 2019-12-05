@@ -1,0 +1,59 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+services:
+
+  peer0.org1.example.com:
+    container_name: peer0.org1.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.org1.example.com
+    extra_hosts:
+      - "orderer.example.com:10.0.0.186"
+      # peer channel create -o orderer.example.com:7050 -c mychannel -f ./channel-artifacts/channel.tx --tls true --cafile $ORDERER_CA
+
+      # peer channel join -b mychannel.block
+
+  peer1.org1.example.com:
+    container_name: peer1.org1.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.org1.example.com
+    extra_hosts:
+      - "orderer.example.com:10.0.0.186" # 127
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    # command: /bin/bash -c './scripts/script.sh ${CHANNEL_NAME}; sleep $TIMEOUT'
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../chaincode/go/:/opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/go
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    extra_hosts:
+      - "orderer.example.com:10.0.0.186"
+      - "peer0.org2.example.com:10.0.0.186"
+      - "peer1.org2.example.com:10.0.0.186"
+      # 和 cli 在同一台 host 可以不用 extra_hosts，此时要用 docker 网络内部的端口；用的话在容器 network 里要能解析成 host 的 ip
+      # - "peer0.org1.example.com:10.0.0.160"
+      # - "peer1.org1.example.com:10.0.0.160"
