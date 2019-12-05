@@ -1,0 +1,131 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+services:
+  zookeeper1:
+    container_name: zookeeper1
+    restart: always
+    image: hyperledger/fabric-zookeeper:x86_64-1.0.3
+    environment:
+      - ZOO_MY_ID=2
+      - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zookeeper2:2890:3890
+    ports:
+      - 2182:2181
+      - 2889:2888
+      - 3889:3888
+    extra_hosts:
+      - "zookeeper0:$HOST1_IP"
+      - "zookeeper1:$HOST2_IP"
+      - "zookeeper2:$HOST2_IP"
+
+  zookeeper2:
+    container_name: zookeeper2
+    restart: always
+    image: hyperledger/fabric-zookeeper:x86_64-1.0.3
+    environment:
+      - ZOO_MY_ID=3
+      - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=zookeeper1:2889:3889 server.3=0.0.0.0:2888:3888
+    ports:
+      - 2183:2181
+      - 2890:2888
+      - 3890:3888
+    extra_hosts:
+      - "zookeeper0:$HOST1_IP"
+      - "zookeeper1:$HOST2_IP"
+      - "zookeeper2:$HOST2_IP"
+
+  kafka2:
+    image: hyperledger/fabric-kafka:x86_64-1.0.3
+    container_name: kafka2
+    restart: always
+    environment:
+      - KAFKA_LOG_RETENTION_MS=-1
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_BROKER_ID=2
+      - KAFKA_LISTENERS=PLAINTEXT://:9094
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9094
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MIN_INSYNC_REPLICAS=2
+    ports:
+      - 9094:9094
+    # volumes:
+      # - ../data/kafka2/logs:/opt/kafka/logs
+      # - ../data/kafka2/kafka-logs:/tmp/kafka-logs
+    extra_hosts:
+      - "zookeeper0:$HOST1_IP"
+      - "zookeeper1:$HOST2_IP"
+      - "zookeeper2:$HOST2_IP"
+      - "kafka0:$HOST1_IP"
+      - "kafka1:$HOST1_IP"
+      - "kafka2:$HOST2_IP"
+      - "kafka3:$HOST2_IP"
+
+  kafka3:
+    image: hyperledger/fabric-kafka:x86_64-1.0.3
+    container_name: kafka3
+    restart: always
+    environment:
+      - KAFKA_LOG_RETENTION_MS=-1
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_BROKER_ID=3
+      - KAFKA_LISTENERS=PLAINTEXT://:9095
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka3:9095
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2182,zookeeper2:2183
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MIN_INSYNC_REPLICAS=2
+    ports:
+      - 9095:9095
+    # volumes:
+      # - ../data/kafka3/logs:/opt/kafka/logs
+      # - ../data/kafka3/kafka-logs:/tmp/kafka-logs
+    extra_hosts:
+      - "zookeeper0:$HOST1_IP"
+      - "zookeeper1:$HOST2_IP"
+      - "zookeeper2:$HOST2_IP"
+      - "kafka0:$HOST1_IP"
+      - "kafka1:$HOST1_IP"
+      - "kafka2:$HOST2_IP"
+      - "kafka3:$HOST2_IP"
+
+  orderer1.example.com:
+    extends:
+      file: base/docker-compose-base.yaml
+      service: orderer.example.com
+    container_name: orderer1.example.com
+    # 当前目录
+    volumes:
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer1.example.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer1.example.com/tls/:/var/hyperledger/orderer/tls
+    ports:
+      - 7050:7050
+    extra_hosts:
+      - "kafka0:$HOST1_IP"
+      - "kafka1:$HOST1_IP"
+      - "kafka2:$HOST2_IP"
+      - "kafka3:$HOST2_IP"
+
+  peer0.org2.example.com:
+    container_name: peer0.org2.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.org2.example.com
+    extra_hosts:
+      - "orderer0.example.com:$HOST1_IP" # 126
+
+  peer1.org2.example.com:
+    container_name: peer1.org2.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.org2.example.com
+    extra_hosts:
+      - "orderer0.example.com:$HOST1_IP"
