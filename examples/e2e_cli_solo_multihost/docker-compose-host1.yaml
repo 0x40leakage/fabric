@@ -13,7 +13,7 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer0.org1.example.com
     extra_hosts:
-      - "orderer.example.com:10.0.0.186"
+      - "orderer.example.com:$HOST2_IP"
       # peer channel create -o orderer.example.com:7050 -c mychannel -f ./channel-artifacts/channel.tx --tls true --cafile $ORDERER_CA
 
       # peer channel join -b mychannel.block
@@ -24,7 +24,7 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer1.org1.example.com
     extra_hosts:
-      - "orderer.example.com:10.0.0.186" # 127
+      - "orderer.example.com:$HOST2_IP" # 127
 
   cli:
     container_name: cli
@@ -51,9 +51,9 @@ services:
         - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
         - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
     extra_hosts:
-      - "orderer.example.com:10.0.0.186"
-      - "peer0.org2.example.com:10.0.0.186"
-      - "peer1.org2.example.com:10.0.0.186"
+      - "orderer.example.com:$HOST2_IP"
+      - "peer0.org2.example.com:$HOST2_IP"
+      - "peer1.org2.example.com:$HOST2_IP"
       # 和 cli 在同一台 host 可以不用 extra_hosts，此时要用 docker 网络内部的端口；用的话在容器 network 里要能解析成 host 的 ip
-      # - "peer0.org1.example.com:10.0.0.160"
-      # - "peer1.org1.example.com:10.0.0.160"
+      # - "peer0.org1.example.com:$HOST1_IP"
+      # - "peer1.org1.example.com:$HOST1_IP"
