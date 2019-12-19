@@ -2,8 +2,8 @@
 
 # 配置
 - Fabric 索取配置的途径有：环境变量，命令行参数，各种格式的配置文件。其中以配置文件为主，环境变量和命令行参数辅助，三者可以相互作用。
-- 主要的配置文件有 `core.yaml`, `orderer.yaml` 等，在 `/fabric/sampleconfig` 中有示例。
-- 主要配置相关的代码集中在 `/fabric/core/config` 下。
+- 主要的配置文件有 `core.yaml`, `orderer.yaml` 等，在 `fabric/sampleconfig` 中有示例。
+- 主要配置相关的代码集中在 `fabric/core/config` 下。
 ## 配置文件
 - > [viper](https://github.com/spf13/viper)
 
@@ -97,22 +97,27 @@
     - `orderer`：orderer 配置，orderer 使用；在 orderer 模块里指定。
 - 分为全局的 `viper` 和特定的 `viper`（参数 `v`）。由 `viper.AddConfigPath` 或 `viper.SetConfigName` 完成的，则是全局的，由 `v.AddConfigPath` 或 `v.SetConfigName` 完成的，则是特定的。这样可以方便地初始化需要**单独使用** `viper` 模块。
     - 如 `orderer` 在 `fabric/orderer/localconfig/config.go` 的 `Load` 函数中，`config := viper.New()`，然后传给 `InitViper`，`cf.InitViper(config, configName)`。
-<!-- continues here -->
-- `fabric/peer/node/start.go` 的 `serve` 函数中 `secureConfig, err := peer.GetSecureConfig()` 用来获取安全配置。安全配置结构为 `fabric/core/comm/server.go` 中定义的 `SecureServerConfig`，用于一个 `grpc` 服务端实例。`.key`, `.crt`, `.ca` 文件所在的目录都是在 `core.yaml` 中定义都的 `tls` 文件夹中。
-    - `serverKey, err := ioutil.ReadFile(config.GetPath("peer.tls.key.file"))`
+
+- 若 gRPC 服务中使用了 TLS 网络，则需要 .key，.crt，.ca 等文件。
+- `fabric/peer/node/start.go` 的 `serve` 函数中 `secureConfig, err := peer.GetSecureConfig()` 用来获取安全配置。
+    <!-- func GetSecureConfig() (comm.SecureServerConfig, error) { -->
+    - 安全配置结构为 `fabric/core/comm/server.go` 中定义的 `SecureServerConfig`，用于一个 gRPC 服务端实例。
+    - `.key`, `.crt`, `.ca` 文件所在的目录在 `core.yaml` 中定义的 `tls` 文件夹中。
+        - `serverKey, err := ioutil.ReadFile(config.GetPath("peer.tls.key.file"))`
 ## 命令行参数
-- `fabric/peer/node/start.go` 的 `startCmd()`函数中，`flags.BoolVarP(&chaincodeDevMode, "peer-chaincodedev", "", false, "Whether peer in chaincode development mode")` 设置了 `peer start` 命令的选项之一 `peer-chaincodedev`，用于赋值文件中的全局变量 `chaincodeDevMode`
-- `chaincode` 的模式在 `core.yaml` 中也有定义，`chaincode.mode` 的值为 `net`，为默认选项。而当执行 `peer start` 命令时指定了选项 `peer-chaincodedev=true`，在 `serve()` 函数中，就会使用 `viper.Set("chaincode.mode", chaincode.DevModeUserRunsChaincode)` 将 `chaincode` 的模式值设置成 `dev`
+- `fabric/peer/node/start.go` 的 `startCmd()` 函数中，`flags.BoolVarP(&chaincodeDevMode, "peer-chaincodedev", "", false, "Whether peer in chaincode development mode")` 设置了 `peer start` 命令的选项之一。    
+    - `peer-chaincodedev`，用于赋值全局变量 `chaincodeDevMode`。
+- chaincode 的模式在 `core.yaml` 中也有定义，`chaincode.mode` 的默认值为 `net`。当执行 `peer start` 命令时指定了选项 `peer-chaincodedev=true`，在 `serve()` 函数中，就会使用 `viper.Set("chaincode.mode", chaincode.DevModeUserRunsChaincode)` 将 chaincode 的模式值设置成 `dev`。
+- > There are 2 modes: "dev" and "net". In dev mode, user runs the chaincode after starting peer from command line on local machine. In net mode, peer will run chaincode in a docker container.
 ## 环境变量
-- Fabric 目前的阶段，各个 peer 都是在容器中运行，因此环境变量指的是各个**容器中的环境变量**
+- Fabric 目前的阶段，各个 peer 都是在容器中运行，因此环境变量指的是各个**容器中的环境变量**。
 - `fabric/peer/main.go`
 	
     ```go
     // For environment variables.
 	viper.SetEnvPrefix(cmdRoot) // "core"
     viper.AutomaticEnv()
-    // 将环境变量中的 `_` 换成 `.` ，和 yaml 文件的配置相匹配
-    // viper 读取 yaml 文件所形成的配置项就是按层级并以 `.` 分隔的格式，如 peer.address
+    // 将环境变量中的 _ 换成 . ，便于 viper 读嵌套配置，如 peer.address
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
     ```
