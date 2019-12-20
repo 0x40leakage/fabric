@@ -88,6 +88,7 @@
     ```
 
 - `peer node start` 启动的 gRPC 服务：`peerServer`，`globalEventsServer`。
+## `peerServer`
 - 创建 `peerServer`
 
     ```go
@@ -160,8 +161,243 @@
     type chaincodeSupportRegisterServer struct {
         grpc.ServerStream
     }
+
+    // 注册服务
+    registerChaincodeSupport(ccSrv.Server(), ccEpFunc)
+    go ccSrv.Start()
+    
+    func registerChaincodeSupport(grpcServer *grpc.Server, ccEpFunc ccEndpointFunc) {
+        // get user mode
+        userRunsCC := chaincode.IsDevMode()
+        // get chaincode startup timeout
+        ccStartupTimeout := viper.GetDuration("chaincode.startuptimeout")
+        if ccStartupTimeout < time.Duration(5)*time.Second {
+            logger.Warningf("Invalid chaincode startup timeout value %s (should be at least 5s); defaulting to 5s", ccStartupTimeout)
+            ccStartupTimeout = time.Duration(5) * time.Second
+        } else {
+            logger.Debugf("Chaincode startup timeout value set to %s", ccStartupTimeout)
+        }
+        ccSrv := chaincode.NewChaincodeSupport(ccEpFunc, userRunsCC, ccStartupTimeout)
+        //Now that chaincode is initialized, register all system chaincodes.
+        scc.RegisterSysCCs()
+        pb.RegisterChaincodeSupportServer(grpcServer, ccSrv)
+    }
     ```
 
+## `globalEventsServer`
+- `EventsServer`
+	
+    ```go
+    // fabric/events/producer/producer.go
+
+    // EventsServer implementation of the Peer service
+    type EventsServer struct {
+    }
+    // singleton - if we want to create multiple servers, we need to subsume events.gEventConsumers into EventsServer
+    var globalEventsServer *EventsServer
+    // NewEventsServer returns a EventsServer
+    func NewEventsServer(bufferSize uint, timeout time.Duration) *EventsServer {
+        initializeEvents(bufferSize, timeout)
+    }
+    // Chat implementation of the Chat bidi streaming RPC function
+    func (p *EventsServer) Chat(stream pb.Events_ChatServer) error {
+    }
+    ```
+
+- 创建 `globalEventsServer`
+
+	
+    ```go
+    ehubGrpcServer, err := createEventHubServer(secureConfig)
+
+    func createEventHubServer(secureConfig comm.SecureServerConfig) (comm.GRPCServer, error) {
+        var lis net.Listener
+        var err error
+        lis, err = net.Listen("tcp", viper.GetString("peer.events.address"))
+        if err != nil {
+            return nil, fmt.Errorf("failed to listen: %v", err)
+        }
+
+        grpcServer, err := comm.NewGRPCServerFromListener(lis, secureConfig)
+        if err != nil {
+            logger.Errorf("Failed to return new GRPC server: %s", err)
+            return nil, err
+        }
+        ehServer := producer.NewEventsServer(
+            uint(viper.GetInt("peer.events.buffersize")),
+            viper.GetDuration("peer.events.timeout"))
+
+        pb.RegisterEventsServer(grpcServer.Server(), ehServer)
+        return grpcServer, nil
+    }
+    ```
+
+- 事件服务
+	
+    ```go
+    // fabric/protos/peer/events.proto
+
+    // Interface exported by the events server
+    service Events {
+        // event chatting using Event
+        rpc Chat(stream SignedEvent) returns (stream Event) {}
+    }
+
+    // fabric/protos/peer/events.pb.go
+    type Events_ChatServer interface {
+        Send(*Event) error
+        Recv() (*SignedEvent, error)
+        grpc.ServerStream
+    }
+    type eventsChatServer struct {
+        grpc.ServerStream
+    }
+
+
+    pb.RegisterEventsServer(grpcServer.Server(), ehServer)
+
+    // fabric/events/producer/producer.go
+
+    // Chat implementation of the Chat bidi streaming RPC function
+    func (p *EventsServer) Chat(stream pb.Events_ChatServer) error {
+        handler, err := newEventHandler(stream)
+        if err != nil {
+            return fmt.Errorf("error creating handler during handleChat initiation: %s", err)
+        }
+        defer handler.Stop()
+        for {
+            in, err := stream.Recv()
+            if err == io.EOF {
+                logger.Debug("Received EOF, ending Chat")
+                return nil
+            }
+            if err != nil {
+                e := fmt.Errorf("error during Chat, stopping handler: %s", err)
+                logger.Error(e.Error())
+                return e
+            }
+            err = handler.HandleMessage(in)
+            if err != nil {
+                logger.Errorf("Error handling message: %s", err)
+                return err
+            }
+        }
+    }
+
+    // HandleMessage handles the Openchain messages for the Peer.
+    func (d *handler) HandleMessage(msg *pb.SignedEvent) error {
+        evt, err := validateEventMessage(msg)
+        if err != nil {
+            return fmt.Errorf("event message must be properly signed by an identity from the same organization as the peer: [%s]", err)
+        }
+
+        switch evt.Event.(type) {
+        case *pb.Event_Register:
+            eventsObj := evt.GetRegister()
+            if err := d.register(eventsObj.Events); err != nil {
+                return fmt.Errorf("could not register events %s", err)
+            }
+        case *pb.Event_Unregister:
+            eventsObj := evt.GetUnregister()
+            if err := d.deregister(eventsObj.Events); err != nil {
+                return fmt.Errorf("could not unregister events %s", err)
+            }
+        case nil:
+        default:
+            return fmt.Errorf("invalide type from client %T", evt.Event)
+        }
+        // TODO return supported events.. for now just return the received msg
+        if err := d.ChatStream.Send(evt); err != nil {
+            return fmt.Errorf("error sending response to %v:  %s", msg, err)
+        }
+
+        return nil
+    }
+    ```
+
+- 启动事件服务
+	
+    ```go
+    // Start the event hub server
+	if ehubGrpcServer != nil {
+		go ehubGrpcServer.Start()
+    }
+    // Start starts the underlying grpc.Server
+    func (gServer *GRPCServer) Start() error {
+        return gServer.server.Serve(gServer.listener)
+    }
+    ```
+
+## `eventProcessor`
+- `eventProcessor`
+	
+    ```go
+    // fabric/events/producer/events.go
+
+    // eventProcessor has a map of event type to handlers interested in that
+    // event type. start() kicks of the event processor where it waits for Events
+    // from producers. We could easily generalize the one event handling loop to one
+    // per handlerMap if necessary.
+    type eventProcessor struct {
+        sync.RWMutex
+        eventConsumers map[pb.EventType]handlerList
+
+        // we could generalize this with mutiple channels each with its own size
+        eventChannel chan *pb.Event
+
+        // timeout duration for producer to send an event.
+        // if < 0, if buffer full, unblocks immediately and not send
+        // if 0, if buffer full, will block and guarantee the event will be sent out
+        // if > 0, if buffer full, blocks till timeout
+        timeout time.Duration
+    }
+
+    // global eventProcessor singleton created by initializeEvents. Openchain producers
+    // send events simply over a reentrant static method
+    var gEventProcessor *eventProcessor
+    // initialize and start
+    func initializeEvents(bufferSize uint, tout time.Duration) {
+        if gEventProcessor != nil {
+            panic("should not be called twice")
+        }
+        gEventProcessor = &eventProcessor{eventConsumers: make(map[pb.EventType]handlerList), eventChannel: make(chan *pb.Event, bufferSize), timeout: tout}
+        addInternalEventTypes()
+        // start the event processor
+        go gEventProcessor.start()
+    }
+
+    // handlerList uses map to implement a set of handlers. use mutex to access
+    // the map. Note that we don't have lock/unlock wrapper methods as the lock
+    // of handler list has to be done under the eventProcessor lock. See
+    // registerHandler, deRegisterHandler. register/deRegister methods
+    // will be called only when a new consumer chat starts/ends respectively
+    // and the big lock should have no performance impact
+    type handlerList interface {
+        add(ie *pb.Interest, h *handler) (bool, error)
+        del(ie *pb.Interest, h *handler) (bool, error)
+        foreach(ie *pb.Event, action func(h *handler))
+    }
+    type genericHandlerList struct {
+        sync.RWMutex
+        handlers map[*handler]bool
+    }
+    type chaincodeHandlerList struct {
+        sync.RWMutex
+        handlers map[string]map[string]map[*handler]bool
+    }
+    ```
+
+## 事件类型
+
+```go
+// should be called at init time to register supported internal events
+func addInternalEventTypes() {
+	AddEventType(pb.EventType_BLOCK)
+	AddEventType(pb.EventType_CHAINCODE)
+	AddEventType(pb.EventType_REJECTION)
+	AddEventType(pb.EventType_REGISTER)
+}
+```
 
 
 
@@ -203,6 +439,23 @@
 
 
 
+
+
+
+
+
+
+
+
+
+- gRPC 流程：
+    - 写 proto，定义 service。
+    - 生成对应的 pb.go，得到待接口和可供调用的函数。
+    - server 端引用 pb.go，实现接口，调用生成的函数注册 gRPC server，调用 gRPC 方法启动 server 服务。
+    - client 端引用 pb.go，调用接口。
+        - [ ] [context](https://blog.golang.org/context)
+    <!-- - https://github.com/grpc/grpc-go/tree/master/examples/helloworld -->
+<!-- https://grpc.io/docs/quickstart/go/ -->
 - As in many RPC systems, gRPC is based around the idea of defining a service, specifying the methods that can be called remotely with their parameters and return types. 
     - On the server side, the server implements this interface and runs a gRPC server to handle client calls. 
     - On the client side, the client has a stub (referred to as just a client in some languages) that provides the same methods as the server.
