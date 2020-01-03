@@ -26,7 +26,7 @@
 - To support these use cases, private data can be purged if it **has not been modified for a configurable number of blocks**. 
 - Purged private data cannot be queried from chaincode, and is not available to other requesting peers.
 - The collection definition gets deployed to the channel at the time of chaincode instantiation (or upgrade). 
-    - If using the peer CLI to instantiate the chaincode, the collection definition file is passed to the chaincode instantiation using the `--collections-config flag`.
+    - If using the peer CLI to instantiate the chaincode, the collection definition file is passed to the chaincode instantiation using the `--collections-config` flag.
     - https://godoc.org/github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt#InstantiateCCRequest
 - A collection definition contains one or more collections, each having a policy definition listing the organizations in the collection, as well as properties used to control dissemination of private data at endorsement time and, optionally, whether the data will be purged.
 	
@@ -75,6 +75,7 @@
 - A single chaincode can reference multiple collections.
     - https://godoc.org/github.com/hyperledger/fabric-chaincode-go/shim#ChaincodeStub.PutPrivateData
 - Since the chaincode proposal gets stored on the blockchain, it is also important not to include private data in the main part of the chaincode proposal. A special field in the chaincode proposal called the `transient` field can be used to pass private data from the client (or data that chaincode will use to generate private data), to chaincode invocation on the peer. The chaincode can retrieve the `transient` field by calling the `GetTransient()` API. This `transient` field gets excluded from the channel transaction.
+    - https://godoc.org/github.com/hyperledger/fabric-sdk-go/pkg/client/channel#Request
     - https://godoc.org/github.com/hyperledger/fabric-chaincode-go/shim#ChaincodeStub.GetTransient
 - If the private data is relatively simple and predictable (e.g. transaction dollar amount), channel members who are not authorized to the private data collection could try to guess the content of the private data via brute force hashing of the domain space, in hopes of finding a match with the private data hash on the chain. Private data that is predictable should therefore include **a random “salt”** that is concatenated with the private data key and included in the private data value, so that a matching hash cannot realistically be found via brute force. The random “salt” can be generated at the client side (e.g. by sampling a secure psuedo-random source) and then passed along with the private data in the `transient` field at the time of chaincode invocation.
 - Private data collection can be queried just like normal channel data, using shim APIs `GetPrivateDataByRange(collection, startKey, endKey string)`, `GetPrivateDataByPartialCompositeKey(collection, objectType string, keys []string)`. For the CouchDB state database, JSON content queries can be passed using the shim API `GetPrivateDataQueryResult(collection, query string)`.
@@ -96,3 +97,38 @@
 - Starting in v1.4, peers of organizations that are added to an existing collection will automatically fetch private data already committed to the collection before they joined the collection.
     - This private data “reconciliation” also applies to peers that were entitled to receive private data but did not yet receive it — because of a network failure, for example — by keeping track of private data that was “missing” at the time of block commit.
     - Private data reconciliation occurs periodically based on the `peer.gossip.pvtData.reconciliationEnabled` and `peer.gossip.pvtData.reconcileSleepInterval` properties in `core.yaml`. The peer will periodically attempt to fetch the private data from other collection member peers that are expected to have it.
+
+<!-- https://hyperledger-fabric.readthedocs.io/en/release-1.4/private_data_tutorial.html -->
+
+# Using private data
+## Build a collection definition JSON file
+
+```js
+// collections_config.json
+[
+  {
+       "name": "collectionMarbles",
+       "policy": "OR('Org1MSP.member', 'Org2MSP.member')",
+       "requiredPeerCount": 0,
+       "maxPeerCount": 3,
+       "blockToLive":1000000,
+       "memberOnlyRead": true
+  },
+
+  {
+       "name": "collectionMarblePrivateDetails",
+       "policy": "OR('Org1MSP.member')",
+       "requiredPeerCount": 0,
+       "maxPeerCount": 3,
+       "blockToLive":3,
+       "memberOnlyRead": true
+  }
+]
+```
+
+- 包含私密数据的交易发到许可外的组织：`Event Server Status Code: (10) ENDORSEMENT_POLICY_FAILURE. Description: received invalid transaction. fromOrg: icbc, toOrg: zjfae, name: vip, amount: 10004, innerBillNo: 1000012412411052"`
+- 许可外的组织查询私密数据：`GET_STATE failed: transaction ID: 2da76ed6564de23c694f69f33d550ffad59a22ceaf1ebb4205f2b4e5fb0b36ef: private data matching public hash version is not available. Public hash version = {BlockNum: 4, TxNum: 0}, Private data version = <nil>`
+- Indexes can also be applied to private data collections, by packaging indexes in the `META-INF/statedb/couchdb/collections/<collection_name>/indexes` directory alongside the chaincode.
+    - For deployment of chaincode to production environments, it is recommended to define any indexes alongside chaincode so that the chaincode and supporting indexes are deployed automatically as a unit, once the chaincode has been installed on a peer and instantiated on a channel. 
+    - The associated indexes are automatically deployed upon chaincode instantiation on the channel when the `--collections-config` flag is specified pointing to the location of the collection JSON file.
+    - https://github.com/hyperledger/fabric-samples/tree/master/chaincode/marbles02_private/go
