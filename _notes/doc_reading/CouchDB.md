@@ -102,3 +102,14 @@
         - For each block received, the [ ] block listener application would iterate through the block transactions and build a data store using the key/value writes from each valid transaction’s `rwset`. 
         - The [peer channel-based event services](https://hyperledger-fabric.readthedocs.io/en/release-1.4/peer_event_services.html) provide replayable events to ensure the integrity of downstream data stores.
         - https://hyperledger.github.io/fabric-sdk-node/release-1.4/index.html tutorials
+
+<!-- https://hyperledger-fabric.readthedocs.io/en/release-1.4/couchdb_tutorial.html -->
+- Rich queries are more flexible and efficient against large indexed data stores, when you want to query the actual data value content rather than the keys. CouchDB is a JSON document datastore rather than a pure key-value store therefore enabling indexing of the contents of the documents in the database.
+- In order to leverage the benefits of CouchDB, namely content-based JSON queries, your **data must be modeled in JSON format**. 
+- You must decide whether to use LevelDB or CouchDB before setting up your network. Switching a peer from using LevelDB to CouchDB is not supported due to data compatibility issues. 
+- All peers on the network must use the same database type. If you have a mix of JSON and binary data values, you can still use CouchDB, however the binary values can only be queried based on key, key range, and composite key queries.
+- A docker image of CouchDB is available and we recommend that it be run on the same server as the peer. You will need to setup one CouchDB container per peer and update each peer container by changing the configuration found in `core.yaml` to point to the CouchDB container. 
+- The `core.yaml` file must be located in the directory specified by the environment variable `FABRIC_CFG_PATH`:
+    - For docker deployments, `core.yaml` is pre-configured and located in the peer container `FABRIC_CFG_PATH` folder. However when using docker environments, you typically pass environment variables by editing the `docker-compose-couch.yaml` to override the `core.yaml`.
+    - For native binary deployments, `core.yaml` is included with the release artifact distribution.
+- To view an example of a `core.yaml` file configured for CouchDB, examine the BYFN `docker-compose-couch.yaml` in the `HyperLedger/fabric-samples/first-network` directory.
