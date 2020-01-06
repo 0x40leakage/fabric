@@ -13,7 +13,7 @@
     - This scheme has many advantages over the incremental number scheme - primarily, it enables other components such as statedb, transaction simulation and validation for making efficient design choices.
 - Following is an illustration of an example read-write set prepared by simulation of a hypothetical transaction. For the sake of simplicity, in the illustrations, we use the incremental numbers for representing the versions.
 	
-    ```
+    ```xml
     <TxReadWriteSet>
         <NsReadWriteSet name="chaincode1">
             <read-set>
