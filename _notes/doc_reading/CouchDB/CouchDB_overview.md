@@ -1,0 +1,60 @@
+- [ ] MapReduce, 
+- [ ] B-tree
+- A CouchDB server hosts named databases, which store *documents*. 
+- Each document is uniquely named in the database, and CouchDB provides a RESTful HTTP API for reading and updating (add, edit, delete) database documents.
+- Documents are the primary unit of data in CouchDB and consist of any number of fields and attachments. Documents also include metadata that’s maintained by the database system. Document fields are uniquely named and contain values of varying types (text, number, boolean, lists, etc), and there is no set limit to text size or element count.
+- The CouchDB document update model is lockless and optimistic. Document edits are made by client applications loading documents, applying changes, and saving them back to the database. 
+    - If another client editing the same document saves their changes first, the client gets an edit conflict error on save. To resolve the update conflict, the latest document version can be opened, the edits reapplied and the update tried again.
+- Single document updates (add, edit, delete) are all or nothing, either succeeding entirely or failing completely. The database never contains partially saved or edited documents.
+- Documents are indexed in B-trees by their name (DocID) and a Sequence ID. Each update to a database instance generates a new sequential number. Sequence IDs are used later for incrementally finding changes in a database. These B-tree indexes are updated simultaneously when documents are saved or deleted. The index updates always occur at the end of the file (append-only updates).
+- Documents have the advantage of data being already conveniently packaged for storage rather than split out across numerous tables and rows in most database systems. When documents are committed to disk, the document fields and metadata are packed into buffers, sequentially one document after another (helpful later for efficient building of views).
+
+- CouchDB differs from others by accepting eventual consistency, as opposed to putting absolute consistency ahead of raw availability, like RDBMS or Paxos. 
+- CouchDB’s solution uses replication to propagate application changes across participating nodes. 
+- The CAP theorem identifies 3 distinct concerns:
+    - Consistency: All database clients see the same data, even with concurrent updates.
+    - Availability: All database clients are able to access some version of the data.
+    - Partition tolerance: The database can be split over multiple servers.
+    ![](http://docs.couchdb.org/en/stable/_images/intro-consistency-01.png)
+- When a system grows large enough that a single database node is unable to handle the load placed on it, a sensible solution is to add more servers. When we add nodes, we have to start thinking about how to partition data between them. Do we have a few databases that share exactly the same data? Do we put different sets of data on different database servers? Do we let only certain database servers write data and let others handle the reads?
+- Regardless of which approach we take, the one problem we’ll keep bumping into is that of keeping all these database servers in sync. 
+    - When it’s absolutely critical that all clients see a consistent view of the database, the users of one node will have to wait for any other nodes to come into agreement before being able to read or write to the database. In this instance, we see that availability takes a backseat to consistency.
+    - If availability is a priority, we can let clients write data to one node of the database without waiting for other nodes to come into agreement. If the database knows how to take care of reconciling these operations between nodes, we achieve a sort of “eventual consistency” in exchange for high availability. This is a surprisingly applicable trade-off for many applications.
+- Unlike traditional relational databases, where each action performed is necessarily subject to database-wide consistency checks, CouchDB makes it really simple to build applications that sacrifice immediate consistency for the huge performance improvements that come with simple distribution.
+- At the heart of CouchDB is a powerful B-tree storage engine. A B-tree is a sorted data structure that allows for searches, insertions, and deletions in logarithmic time. CouchDB uses this B-tree storage engine for all internal data, documents, and views.
+    ![](http://docs.couchdb.org/en/stable/_images/intro-consistency-02.png)
+- CouchDB uses MapReduce to compute the results of a view. MapReduce makes use of two functions, “map” and “reduce”, which are applied to each document in isolation. Being able to isolate these operations means that view computation lends itself to parallel and incremental computation. More important, because these functions produce key/value pairs, CouchDB is able to insert them into the B-tree storage engine, sorted by key. 
+    - Lookups by key, or key range, are extremely efficient operations with a B-tree, described in big O notation as `O(log N)` and `O(log N + K)`, respectively.
+- In CouchDB, we access documents and view results by key or key range. This is a direct mapping to the underlying operations performed on CouchDB’s B-tree storage engine. Along with document inserts and updates, this direct mapping is the reason we describe CouchDB’s API as being a thin wrapper around the database core.
+- A table in a relational database is a single data structure. If you want to modify a table – say, update a row – the database system must ensure that nobody else is trying to update that row and that nobody can read from that row while it is being updated. The common way to handle this uses what’s known as a lock. If multiple clients want to access a table, the first client gets the lock, making everybody else wait. When the first client’s request is processed, the next client is given access while everybody else waits, and so on. This serial execution of requests, even when they arrived in parallel, wastes a significant amount of your server’s processing power. 
+    - Under high load, a relational database can spend more time figuring out who is allowed to do what, and in which order, than it does doing any actual work.
+    - Modern relational databases avoid locks by implementing MVCC under the hood, but hide it from the end user, requiring them to coordinate concurrent changes of single rows or fields.
+- Instead of locks, CouchDB uses Multi-Version Concurrency Control (MVCC) to manage concurrent access to the database.
+    ![](http://docs.couchdb.org/en/stable/_images/intro-consistency-03.png)
+    - Documents in CouchDB are ***versioned***, much like they would be in a regular version control system such as Subversion. If you want to change a value in a document, you create an entire new version of that document and save it over the old one. After doing this, you end up with two versions of the same document, one old and one new.
+        - Consider a set of requests wanting to access a document. The first request reads the document. While this is being processed, a second request changes the document. Since the second request includes a completely new version of the document, CouchDB can simply append it to the database without having to wait for the read request to finish.
+        - When a third request wants to read the same document, CouchDB will point it to the new version that has just been written. During this whole process, the first request could still be reading the original version.
+    - A read request will always see the most recent snapshot of your database at the time of the beginning of the request.
+- CouchDB can validate documents using JavaScript functions similar to those used for MapReduce. Each time you try to modify a document, CouchDB will pass the validation function a copy of the existing document, a copy of the new document, and a collection of additional information, such as user authentication details. The validation function now has the opportunity to approve or deny the update.
+    - By working with the grain and letting CouchDB do this for us, we save ourselves a tremendous amount of CPU cycles that would otherwise have been spent serializing object graphs from SQL, converting them into domain objects, and using those objects to do application-level validation.
+- > Multi-master, single-master, partitioning, sharding, write-through caches.
+- Incremental replication is a process where document changes are periodically copied between servers.
+    - We are able to build what’s known as a shared nothing cluster of databases where each node is independent and self-sufficient, leaving no single point of contention across the system.
+    - You could use this feature to synchronize database servers within a cluster or between data centers using a job scheduler such as cron, or you could use it to synchronize data with your laptop for offline work as you travel. Each database can be used in the usual fashion, and changes between databases can be synchronized later in both directions.
+- When CouchDB detects that a document has been changed in both databases, it flags this document as being in conflict, much like they would be in a regular version control system.
+    - When two versions of a document conflict during replication, the winning version is saved as the most recent version in the document’s history. Instead of throwing the losing version away, as you might expect, CouchDB saves this as a previous version in the document’s history, so that you can access it if you need to. 
+    - This happens automatically and consistently, so both databases will make exactly the same choice.
+    - It is up to you to handle conflicts in a way that makes sense for your application. You can leave the chosen document versions in place, revert to the older version, or try to merge the two versions and save the result.
+<!-- - [Case study](http://docs.couchdb.org/en/stable/intro/consistency.html#case-study)
+    - The first time we use this backup application, we feed our playlists to the application and initiate a backup. 
+        - Each playlist is converted to a JSON object and handed to a CouchDB database. 
+        - CouchDB hands back the document ID and revision of each playlist as it’s saved to the database.
+    - After a few days, we find that our playlists have been updated and we want to back up our changes.
+        - After we have fed our playlists to the backup application, it **fetches** the latest versions from CouchDB, along with the corresponding document revisions. 
+        - When the application hands back the new playlist document, CouchDB requires that the document revision is included in the request.
+        - CouchDB then makes sure that the document revision handed to it in the request matches the current revision held in the database. Because CouchDB updates the revision with every modification, if these two are out of sync it suggests that someone else has made changes to the document between the time we requested it from the database and the time we sent our updates. 
+            - Making changes to a document after someone else has modified it without first inspecting those changes is usually a bad idea.
+    - We have a laptop we want to keep synchronized with our desktop computer. With all our playlists on our desktop, the first step is to “restore from backup” onto our laptop. 
+        - This is the first time we’ve done this, so afterward our laptop should hold an exact replica of our desktop playlist collection. -->
+- Forcing clients to hand back the correct document revision is the heart of CouchDB’s optimistic concurrency.
+- CouchDB’s design borrows heavily from web architecture and the lessons learned deploying massively distributed systems on that architecture. By understanding why this architecture works the way it does, and by learning to spot which parts of your application can be easily distributed and which parts cannot, you’ll enhance your ability to design distributed and scalable applications, with CouchDB or without it.
