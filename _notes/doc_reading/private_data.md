@@ -54,9 +54,9 @@
     - `name`: Name of the collection.
     - `policy`: The private data collection distribution policy defines which organizations’ peers are allowed to persist the collection data expressed using the `Signature` policy syntax, with each member being included in an `OR` signature policy list. 
         - To support read/write transactions, the private data distribution policy must define a broader set of organizations than the chaincode endorsement policy, as peers must have the private data in order to endorse proposed transactions. 
-            - 私密数据不能发给不在集合里的组织的 peer，否则不再私密。若私密数据集的范围比 cc 背书策略里的小，则发给私密数据集范围外的组织的 peer 也可完成背书，矛盾。所有要控制 cc 背书策略的组织范围小于等于私密数据集里定义的组织。
+            - 私密数据不能发给不在集合里的组织的 peer，否则不再私密。若私密数据集的范围比 cc 背书策略里的小，则发给私密数据集范围外的组织的 peer 也可完成背书，也可以拿到私密数据。所以要控制 cc 背书策略的组织范围小于等于私密数据集里定义的组织。
     - `requiredPeerCount`: Minimum number of peers (across authorized organizations) that each endorsing peer must successfully disseminate private data to before the peer signs the endorsement and returns the proposal response back to the client. Requiring dissemination as a condition of endorsement will ensure that private data is available in the network even if the endorsing peer(s) become unavailable (during block commit time for other authorized peers to pull private data from). 
-        - When requiredPeerCount is `0`, it means that no distribution is required, but there may be some distribution if `maxPeerCount` is greater than zero. 
+        - When `requiredPeerCount` is 0, it means that no distribution is required, but there may be some distribution if `maxPeerCount` is greater than zero. 
         - A `requiredPeerCount` of 0 would typically not be recommended, as it could lead to loss of private data in the network if the endorsing peer(s) becomes unavailable. Typically you would want to require at least some distribution of the private data at endorsement time to ensure redundancy of the private data on multiple peers in the network.
     - `maxPeerCount`: For data redundancy purposes, the maximum number of **other peers** (across authorized organizations) that each endorsing peer will attempt to distribute the private data to. 
         - If an endorsing peer becomes unavailable between endorsement time and commit time, other peers that are collection members but who did not yet receive the private data at endorsement time, will be able to pull the private data from peers the private data was disseminated to. 
@@ -126,7 +126,7 @@
 ]
 ```
 
-- 包含私密数据的交易发到许可外的组织：`Event Server Status Code: (10) ENDORSEMENT_POLICY_FAILURE. Description: received invalid transaction. fromOrg: icbc, toOrg: zjfae, name: vip, amount: 10004, innerBillNo: 1000012412411052"`
+- 交易发到背书策略外的组织：`Event Server Status Code: (10) ENDORSEMENT_POLICY_FAILURE. Description: received invalid transaction. fromOrg: icbc, toOrg: zjfae, name: vip, amount: 10004, innerBillNo: 1000012412411052"`
 - 许可外的组织查询私密数据：`GET_STATE failed: transaction ID: 2da76ed6564de23c694f69f33d550ffad59a22ceaf1ebb4205f2b4e5fb0b36ef: private data matching public hash version is not available. Public hash version = {BlockNum: 4, TxNum: 0}, Private data version = <nil>`
 - Indexes can also be applied to private data collections, by packaging indexes in the `META-INF/statedb/couchdb/collections/<collection_name>/indexes` directory alongside the chaincode.
     - For deployment of chaincode to production environments, it is recommended to define any indexes alongside chaincode so that the chaincode and supporting indexes are deployed automatically as a unit, once the chaincode has been installed on a peer and instantiated on a channel. 

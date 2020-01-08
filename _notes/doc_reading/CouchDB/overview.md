@@ -1,5 +1,6 @@
-- [ ] MapReduce, 
-- [ ] B-tree
+ - [db indices](https://blog.csdn.net/weiliangliang111/article/details/51333169)
+ - [b-tree](https://www.crondose.com/2016/10/introduction-to-the-b-tree-data-structure/)
+    - https://www.geeksforgeeks.org/introduction-of-b-tree-2/
 - A CouchDB server hosts named databases, which store *documents*. 
 - Each document is uniquely named in the database, and CouchDB provides a RESTful HTTP API for reading and updating (add, edit, delete) database documents.
 - Documents are the primary unit of data in CouchDB and consist of any number of fields and attachments. Documents also include metadata that’s maintained by the database system. Document fields are uniquely named and contain values of varying types (text, number, boolean, lists, etc), and there is no set limit to text size or element count.

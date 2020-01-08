@@ -1,0 +1,24 @@
+<!-- http://docs.couchdb.org/en/stable/ddocs/views/intro.html -->
+
+- Views are the primary tool used for querying and reporting on CouchDB documents. 
+- Views are useful for many purposes:
+    - Filtering the documents in your database to find those relevant to a particular process.
+    - Extracting data from your documents and presenting it in a specific order.
+    - Building efficient indexes to find documents by any value or structure that resides in them.
+    - Use these indexes to represent relationships among documents.
+    - Finally, with views you can make all sorts of calculations on the data in your documents. 
+        - For example, if documents represent your company’s financial transactions, a view can answer the question of what the spending was in the last week, month, or year.
+- The documents are sorted by “_id”, which is how they are stored in the database.
+- You provide CouchDB with **view functions** as strings stored inside the `views` field of a design document. You don’t run it yourself. Instead, when you query your view, CouchDB takes the source code and runs it for you on every document in the database your view was defined in. 
+- You query your view to retrieve the view result.
+- All map functions have a single parameter `doc`. This is a single document in the database. 
+- The `emit()` function always takes 2 arguments: the first is `key`, and the second is `value`. 
+    - The `emit()` function can be called multiple times in the map function to create multiple entries in the view results from a single document.
+- The `emit(key, value)` function creates an entry in our view result.
+- CouchDB takes whatever you pass into the `emit()` function and puts it into a list. Each row in that list includes the key and value. More importantly, the list is sorted by key. The most important feature of a view result is that it is **sorted by key**.
+- When you query your view, CouchDB takes the source code and runs it for you on every document in the database. 
+    - If you have a lot of documents, that takes quite a bit of time and you might wonder if it is not horribly inefficient to do this. Yes, it would be, but CouchDB is designed to avoid any extra costs: it only runs through all documents once, when you first query your view. If a document is changed, the map function is only run once, to recompute the keys and values for that single document.
+- The view result is stored in a B-tree, just like the structure that is responsible for holding your documents. View B-trees are stored in their own file, so that for high-performance CouchDB usage, you can keep views on their own disk. 
+    - The B-tree provides very fast lookups of rows by key, as well as efficient streaming of rows in a key range.
+- Each view you create corresponds to one B-tree. All views in a single design document will live in the same set of index files on disk (one file per database shard; in 2.0+ by default, 8 files per node).
+- The most practical consideration for separating views into separate documents is how often you change those views. Views that change often, and are in the same design document as other views, will invalidate those other views’ indexes when the design document is written, forcing them all to rebuild from scratch. Obviously you will want to avoid this in production!

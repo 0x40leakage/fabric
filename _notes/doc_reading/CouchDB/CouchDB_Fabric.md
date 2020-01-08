@@ -135,7 +135,7 @@
     - `fields`: these are the frequently queried fields
     - `name`: name of the index
     - `type`: always `json` in this context
-    - Optionally the design document attribute `ddoc` can be specified on the index definition. A [design document](http://guide.couchdb.org/draft/design.html) is CouchDB construct designed to contain indexes. Indexes can be grouped into design documents for efficiency but CouchDB recommends one index per design document.
+    - Optionally the design document attribute `ddoc` can be specified on the index definition. A [design document](http://guide.couchdb.org/draft/design.html) is CouchDB construct designed to contain indexes. Indexes can be grouped into design documents for efficiency but CouchDB recommends **one index per design document**.
 - When defining an index it is a good practice to include the `ddoc` attribute and value along with the index name. It is important to include this attribute to ensure that you can update the index later if needed. Also it gives you the ability to explicitly specify which index to use on a query.
 	
     ```js
