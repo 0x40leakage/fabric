@@ -8,7 +8,6 @@
         - For example, if you perform a rich query for all assets owned by Alice and transfer them to Bob, a new asset may be assigned to Alice by another transaction between chaincode execution time and commit time, and you would miss this “phantom” item.
 - CouchDB runs as a separate database process alongside the peer, therefore there are additional considerations in terms of setup, management, and operations. You may consider starting with the default embedded LevelDB, and move to CouchDB if you require the additional complex rich queries. 
     - It is a good practice to **model chaincode asset data as JSON**, so that you have the option to perform complex rich queries if needed in the future.
-        - [ ] how: see marbles02 chaincode
 - The key for a CouchDB JSON document can only contain valid UTF-8 strings and cannot begin with an underscore. Whether you are using CouchDB or LevelDB, you should avoid using U+0000 (nil byte) in keys.
 - JSON documents in CouchDB cannot use the following values as top level field names. These values are reserved for internal use.
     - Any field beginning with an underscore `_`
@@ -17,7 +16,7 @@
     - http://docs.couchdb.org/en/stable/api/database/find.html
     - https://github.com/hyperledger/fabric-samples/blob/master/chaincode/marbles02/go/marbles_chaincode.go
 - Fabric supports paging of query results for rich queries and range based queries. APIs supporting pagination allow the use of page size and bookmarks to be used for both range and rich queries. 
-- To support efficient pagination, the Fabric pagination APIs must be used. Specifically, the CouchDB `limit` keyword will not be honored in CouchDB queries since Fabric itself manages the pagination of query results and implicitly sets the `pageSize` limit that is passed to CouchDB.
+- To support efficient pagination, the Fabric pagination APIs must be used. Specifically, the CouchDB `limit` keyword will not be honored in CouchDB queries since Fabric itself manages the pagination of query results and implicitly sets the **`pageSize`** limit that is passed to CouchDB.
     - If a `pageSize` is specified using the paginated query APIs (`GetStateByRangeWithPagination()`, `GetStateByPartialCompositeKeyWithPagination()`, and `GetQueryResultWithPagination()`), a set of results (bound by the `pageSize`) will be returned to the chaincode along with a bookmark. The bookmark can be returned from chaincode to invoking clients, which can use the bookmark in a follow on query to receive the next “page” of results.
 - The pagination APIs are for use in read-only transactions only, the query results are intended to support client paging requirements. For transactions that need to read and write, use the non-paginated chaincode query APIs. Within chaincode you can iterate through result sets to your desired depth.
 - Regardless of whether the pagination APIs are utilized, all chaincode queries are **bound** by `totalQueryLimit` (default 100000) from `core.yaml`. This is the maximum number of results that chaincode will iterate through and return to the client, in order to avoid accidental or malicious long-running queries.
@@ -103,6 +102,7 @@
         - https://hyperledger.github.io/fabric-sdk-node/release-1.4/index.html tutorials
 
 <!-- https://hyperledger-fabric.readthedocs.io/en/release-1.4/couchdb_tutorial.html -->
+
 - Rich queries are more flexible and efficient against large indexed data stores, when you want to query the actual data value content rather than the keys. CouchDB is a JSON document datastore rather than a pure key-value store therefore enabling indexing of the contents of the documents in the database.
 - In order to leverage the benefits of CouchDB, namely content-based JSON queries, your **data must be modeled in JSON format**. 
 - You must decide whether to use LevelDB or CouchDB before setting up your network. Switching a peer from using LevelDB to CouchDB is not supported due to data compatibility issues. 
@@ -114,7 +114,7 @@
 - To view an example of a `core.yaml` file configured for CouchDB, examine the BYFN `docker-compose-couch.yaml` in the `HyperLedger/fabric-samples/first-network` directory.
     - https://github.com/hyperledger/fabric-samples/blob/master/first-network/docker-compose-couch.yaml
 - Indexes allow a database to be queried without having to examine every row with every query, making them run faster and more efficiently. Normally, indexes are built for frequently occurring query criteria allowing the data to be queried more efficiently. 
-- To leverage the major benefit of CouchDB – the ability to perform rich queries against JSON data – indexes are not required, but they are strongly recommended for performance. Also, if sorting is required in a query, CouchDB requires an index of the sorted fields.
+- To leverage the major benefit of CouchDB – the ability to perform rich queries against JSON data – indexes are not required, but they are strongly recommended for performance. Also, if sorting is required in a query, **CouchDB requires an index of the sorted fields**.
     - Rich queries that do not have an index will work but may throw a warning in the CouchDB log that the index was not found. However, if a rich query includes a sort specification, then an index on that field is required; otherwise, the query will fail and an error will be thrown.
 - Marbles data structure:
 	
@@ -225,8 +225,8 @@
     peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["queryMarbles", "{\"selector\":{\"owner\":\"tom\"}, \"use_index\":[\"indexOwnerDoc\", \"indexOwner\"]}"]}'
     ```
 
-    - If you add extra fields to the query above, it will still use the index. However, the query will additionally have to scan the indexed data for the extra fields, resulting in a longer response time.
-    - A query that does not include all fields in the index will have to scan the full database instead.
+    - If you add extra fields to the query above, it will still use the index. However, the query will additionally have to **scan the indexed data** for the extra fields, resulting in a longer response time.
+    - A query that does not include all fields in the index will have to **scan the full database** instead.
 - In general, more complex queries will have a longer response time, and have a lower chance of being supported by an index.
 	
     ```bash
