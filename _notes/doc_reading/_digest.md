@@ -4,7 +4,8 @@
 - [ ] 初始化合约是否通过发交易
 - [ ] 签名验签具体过程
     - [ ] digitally signed transaction response 是 cc 负责签名的还是 peer 负责签名
-- [ ] orderer 属于各家组织是否正当
+- [x] orderer 属于各家组织是否正当
+    - https://hyperledger-fabric.readthedocs.io/en/release-1.4/_images/membership.diagram.2.png
 
 An ordering service uses the *system channel*.  
 There is also a special system channel defined for use by the ordering service. It behaves in exactly the same way as a regular channel.
@@ -65,7 +66,7 @@ In our network peer nodes P1 and P2 both have a copy of channel configuration CC
 
 To change a network or channel configuration, an administrator must submit a configuration transaction to change the network or channel configuration. It must be signed by the organizations identified in the appropriate policy as being responsible for configuration change. This policy is called the *mod_policy*.  
 
-The ordering service nodes operate a **mini-blockchain, connected via the system channel**. Using the system channel ordering service nodes distribute network configuration transactions. These transactions are used to co-operatively maintain a consistent copy of the network configuration at each ordering service node.   
+The ordering service nodes operate a ***mini-blockchain, connected via the system channel***. Using the system channel ordering service nodes distribute network configuration transactions. These transactions are used to co-operatively maintain a consistent copy of the network configuration at each ordering service node.   
 In a similar way, peer nodes in an **application channel** can distribute channel configuration transactions. Likewise, these transactions are used to maintain a consistent copy of the channel configuration at each peer node.（通道配置的交易在对应的应用链上，[ ] 和链上的普通交易如何区分？）  
 
 As well as being the **management point for the network**, the ordering service  is also the **distribution point for transactions**. The ordering service is the component which **gathers** endorsed transactions from applications and **orders** them into transaction blocks, which are subsequently **distributed** to every peer node in the channel. At each of these committing peers, transactions are recorded, whether valid or invalid, and their local copy of the ledger updated appropriately.  
