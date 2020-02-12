@@ -1,4 +1,9 @@
+peer1 的数字证书的颁发者是 CA1，peer1 连接 channel 时，channel MSP 中定义的策略显示 CA1 是与 Org1（Org1.MSP) 关联的，从而确定 peer1 在 Org1 中的角色（role）和对区块链网络资源的访问权限。  
+
+任何与区块链网络交互的实体都通过数字证书和 MSP 来获得其在组织中的身份。
+
 - [ ] MSP 可以给他人吗，是否给到他人后可以冒充身份
+    - 只给 msp 目录，不给私钥
 - [ ] 解码 X.509 的 pem 证书
 
 The different actors in a blockchain network include peers, orderers, client applications, administrators and more. Each of these actors — active elements inside or outside a network able to consume services — has a digital identity encapsulated in an *X.509* digital certificate.  

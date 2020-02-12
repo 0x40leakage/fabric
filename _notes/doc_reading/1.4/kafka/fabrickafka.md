@@ -1,0 +1,3 @@
+Kafka uses the same conceptual “leader and follower” configuration used by Raft, in which transactions (which Kafka calls “messages”) are **replicated** from the leader node to the follower nodes. In the event the leader node goes down, one of the followers becomes the leader and ordering can continue, ensuring fault tolerance, just as with Raft.
+
+The management of the Kafka cluster, including the coordination of tasks, cluster membership, access control, and controller election, among others, is handled by a ZooKeeper ensemble and its related APIs.
