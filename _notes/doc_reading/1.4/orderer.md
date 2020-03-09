@@ -1,5 +1,6 @@
 - [ ] 系统链，更新 channel 配置的交易发到哪条链，流程如何
 - [ ] 收到交易的顺序不同，orderer 节点间如何协调？问题存在否？？
+    - kafka 确保交易一致了，orderer 如何保证切出来的块是一致的？
 
 In addition to their **ordering** role, orderers also maintain the list of organizations that are allowed to **create channels**. This list of organizations is known as the “consortium”, and the list itself is kept in the **configuration** of the “*orderer system channel*”.  
 By default, this list, and the channel it lives on, can only be edited by the **orderer admin**. Note that it is possible for an ordering service to hold several of these lists, which makes the consortium a vehicle for Fabric multi-tenancy.
