@@ -260,6 +260,7 @@ func CreateChaincodeProposalWithTransient(typ common.HeaderType, chainID string,
 		return nil, "", err
 	}
 
+	// proposal 时 txID 已经生成
 	// compute txid
 	txid, err := ComputeProposalTxID(nonce, creator)
 	if err != nil {
