@@ -146,6 +146,7 @@ func serve(args []string) error {
 	// and was racy with respect to initialization of gRPC clients and servers.
 	grpc.EnableTracing = true
 
+	fmt.Println("----------------peer default entry point----------------")
 	logger.Infof("Starting %s", version.GetInfo())
 
 	//startup aclmgmt with default ACL providers (resource based and default 1.0 policies based).

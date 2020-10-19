@@ -1,4 +1,45 @@
 
+```bash
+# peer
+## mac
+mkdir -p .build/docker/bin .build/docker/peer/pkg .build/docker/gocache && docker run -i --rm  -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/bin:/opt/gopath/bin \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/peer/pkg:/opt/gopath/pkg \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/gocache:/opt/gopath/cache \
+                -e GOCACHE=/opt/gopath/cache \
+                hyperledger/fabric-baseimage:amd64-0.4.21 \
+                go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.4.10 -X github.com/hyperledger/fabric/common/metadata.CommitSHA=a40f9d277 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.4.21 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger" github.com/hyperledger/fabric/peer && touch .build/docker/bin/peer && ll .build/docker/bin/peer
+
+export TARGET_PEER=peer0.org1.example.com
+docker cp .build/docker/bin/peer $TARGET_PEER:/usr/local/bin/peer && docker cp .build/docker/bin/peer cli:/usr/local/bin/peer && docker restart $TARGET_PEER
+
+
+# orderer
+## mac
+mkdir -p .build/docker/bin .build/docker/orderer/pkg .build/docker/gocache 
+
+docker run -i --rm  -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/bin:/opt/gopath/bin \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/orderer/pkg:/opt/gopath/pkg \
+                -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/gocache:/opt/gopath/cache \
+                -e GOCACHE=/opt/gopath/cache \
+                hyperledger/fabric-baseimage:amd64-0.4.21 \
+                go install -tags "" -ldflags "-X github.com/hyperledger/fabric/common/metadata.Version=1.4.10 -X github.com/hyperledger/fabric/common/metadata.CommitSHA=a40f9d277 -X github.com/hyperledger/fabric/common/metadata.BaseVersion=0.4.21 -X github.com/hyperledger/fabric/common/metadata.BaseDockerLabel=org.hyperledger.fabric -X github.com/hyperledger/fabric/common/metadata.DockerNamespace=hyperledger -X github.com/hyperledger/fabric/common/metadata.BaseDockerNamespace=hyperledger" github.com/hyperledger/fabric/orderer
+                
+touch .build/docker/bin/orderer & ll .build/docker/bin/orderer
+
+docker cp .build/docker/bin/orderer orderer.example.com:/usr/local/bin/orderer
+docker restart orderer.example.com
+
+
+
+peer chaincode invoke -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
+
+peer chaincode query -C mychannel -n mycc -c '{"Args":["query","a"]}'
+```
+
+
+<!-- 
 # Hyperledger Fabric [![join the chat][rocketchat-image]][rocketchat-url]
 
 [rocketchat-url]: https://chat.hyperledger.org/channel/fabric
@@ -77,4 +118,4 @@ Check [the documentation](testingInfo.rst) for information on the testing struct
 
 ## License <a name="license"></a>
 
-Hyperledger Project source code files are made available under the Apache License, Version 2.0 (Apache-2.0), located in the [LICENSE](LICENSE) file. Hyperledger Project documentation files are made available under the Creative Commons Attribution 4.0 International License (CC-BY-4.0), available at http://creativecommons.org/licenses/by/4.0/.
+Hyperledger Project source code files are made available under the Apache License, Version 2.0 (Apache-2.0), located in the [LICENSE](LICENSE) file. Hyperledger Project documentation files are made available under the Creative Commons Attribution 4.0 International License (CC-BY-4.0), available at http://creativecommons.org/licenses/by/4.0/. -->
