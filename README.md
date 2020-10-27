@@ -2,6 +2,7 @@
 ```bash
 # peer
 ## mac
+cd $GOPATH/src/github.com/hyperledger/fabric
 mkdir -p .build/docker/bin .build/docker/peer/pkg .build/docker/gocache && docker run -i --rm  -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \
                 -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/bin:/opt/gopath/bin \
                 -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric/.build/docker/peer/pkg:/opt/gopath/pkg \
@@ -13,9 +14,16 @@ mkdir -p .build/docker/bin .build/docker/peer/pkg .build/docker/gocache && docke
 export TARGET_PEER=peer0.org1.example.com
 docker cp .build/docker/bin/peer $TARGET_PEER:/usr/local/bin/peer && docker cp .build/docker/bin/peer cli:/usr/local/bin/peer && docker restart $TARGET_PEER
 
+make docker-peer && \
+cd $GOPATH/src/github.com/hyperledger/fabric-samples/first-network && \
+docker rm -f $TARGET_PEER && docker-compose -f docker-compose-cli-1org1peer.yaml up -d $TARGET_PEER
+
+
+
 
 # orderer
 ## mac
+cd $GOPATH/src/github.com/hyperledger/fabric
 mkdir -p .build/docker/bin .build/docker/orderer/pkg .build/docker/gocache 
 
 docker run -i --rm  -v /Users/slackbuffer/go/src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric -w /opt/gopath/src/github.com/hyperledger/fabric \

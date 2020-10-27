@@ -202,6 +202,8 @@ test-cmd:
 	@echo "go test -tags \"$(GO_TAGS)\""
 
 docker: $(patsubst %,$(BUILD_DIR)/image/%/$(DUMMY), $(IMAGES))
+docker-peer: $(patsubst %,$(BUILD_DIR)/image/%/$(DUMMY), peer)
+docker-orderer: $(patsubst %,$(BUILD_DIR)/image/%/$(DUMMY), orderer)
 
 native: peer orderer configtxgen cryptogen idemixgen configtxlator discover
 
