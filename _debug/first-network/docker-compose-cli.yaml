@@ -6,7 +6,7 @@
 version: '2'
 
 volumes:
-  orderer.example.com:
+  orderer0.example.com:
   peer0.org1.example.com:
   peer1.org1.example.com:
   peer0.org2.example.com:
@@ -17,11 +17,11 @@ networks:
 
 services:
 
-  orderer.example.com:
+  orderer0.example.com:
     extends:
       file:   base/docker-compose-base.yaml
-      service: orderer.example.com
-    container_name: orderer.example.com
+      service: orderer0.example.com
+    container_name: orderer0.example.com
     networks:
       - byfn
 
@@ -85,7 +85,7 @@ services:
         - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
         - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
     depends_on:
-      - orderer.example.com
+      - orderer0.example.com
       - peer0.org1.example.com
       - peer1.org1.example.com
       - peer0.org2.example.com
