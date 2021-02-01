@@ -65,71 +65,38 @@ https://www.jianshu.com/p/dbed4e210956?spm=a2c4e.10696291.0.0.6fd019a43RbjSU
 
 https://stackoverflow.com/questions/62495170/hyperledger-fabric-serverhandshake-tls-handshake-bad-certificate-server-peerser
 
-Error: Error endorsing chaincode: rpc error: code = Unavailable desc = all SubConns are in TransientFailure, latest connection error: <nil>
+<!-- Error: Error endorsing chaincode: rpc error: code = Unavailable desc = all SubConns are in TransientFailure, latest connection error: <nil>
 
+2021-02-01 10:49:45.294 UTC [core.comm] ServerHandshake -> ERRO 06c Server TLS handshake failed in 174.908µs with error tls: first record does not look like a TLS handshake server=Orderer remoteaddress=127.0.0.1:59702 -->
 
+```bash
 export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=10.0.0.111:7051
-./peer chaincode install -n mycc -v 2.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
-
-export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
-./peer chaincode install -n mycc -v 3.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
-
-export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=localhost:7051
-./peer chaincode install -n mycc -v 4.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
-
-export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=127.0.0.1:7051
-./peer chaincode install -n mycc -v 5.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
-
-export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=172.17.0.1:7051
-
-
-
-
-
-
-
-export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
-export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
 export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
 export CORE_PEER_LOCALMSPID=Org1MSP
+# !!!! 这个参数
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_TLS_CERT_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
 export CORE_PEER_TLS_ROOTCERT_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
-export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
-
+export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
 
 ./peer channel create -o orderer0.example.com:7050 -c mychannel -f ../_debug/first-network/channel-artifacts/channel.tx --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
-./peer channel join -b ../_debug/first-network/channel-artifacts/mychannel.block
 ./peer channel join -b ./mychannel.block
-<!-- 2021-02-01 10:49:45.294 UTC [core.comm] ServerHandshake -> ERRO 06c Server TLS handshake failed in 174.908µs with error tls: first record does not look like a TLS handshake server=Orderer remoteaddress=127.0.0.1:59702 -->
 
-./peer chaincode install -n mycc -v 6.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
+./peer chaincode install -n mycc -v 1.0 -l golang -p github.com/hyperledger/fabric/_debug/chaincode/chaincode_example02/go
 
-./peer chaincode instantiate -o orderer0.example.com:7050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc -l golang -v 3.0 -c '{"Args":["init","a","100","b","200"]}' -P 'OR ('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
+./peer chaincode instantiate -o orderer0.example.com:7050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc -l golang -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P 'OR ('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
+# Error: could not assemble transaction, err proposal response was not successful, error code 500, msg error starting container: error starting container: Failed to generate platform-specific docker build: Error executing build: API error (404): network net_byfn not found ""
+# docker-compose -f docker-compose-cli-raft-native-3-orderers-1-peer.yaml up -d
 
+# Error: could not assemble transaction, err proposal response was not successful, error code 500, msg chaincode registration failed: container exited with 0
+# debug 中的 peer 的 CORE_PEER_CHAINCODEADDRESS 改成宿主机 ip
+# https://www.jianshu.com/p/dbed4e210956?spm=a2c4e.10696291.0.0.6fd019a43RbjSU
 
+./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","a"]}'
 
+./peer chaincode invoke -o orderer0.example.com:7050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
 
-peer channel create -o orderer0.example.com:7050 -c mychannel -f ./channel-artifacts/channel.tx --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
-peer channel join -b ./mychannel.block
-peer chaincode install -n mycc -v 6.0 -l golang -p github.com/chaincode/chaincode_example02/go
-peer chaincode instantiate -o orderer0.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc -l golang -v 6.0 -c '{"Args":["init","a","100","b","200"]}' -P 'OR ('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
+./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","b"]}'
+```
