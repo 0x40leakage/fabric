@@ -23,6 +23,10 @@ services:
       service: peer0.org1.example.com
     networks:
       - byfn
+    extra_hosts:
+      - "orderer0.example.com:172.17.0.1"
+      - "orderer1.example.com:172.17.0.1"
+      - "orderer2.example.com:172.17.0.1"
 
   peer1.org1.example.com:
     container_name: peer1.org1.example.com
@@ -31,6 +35,10 @@ services:
       service: peer1.org1.example.com
     networks:
       - byfn
+    extra_hosts:
+      - "orderer0.example.com:172.17.0.1"
+      - "orderer1.example.com:172.17.0.1"
+      - "orderer2.example.com:172.17.0.1"
 
   peer0.org2.example.com:
     container_name: peer0.org2.example.com
@@ -39,6 +47,11 @@ services:
       service: peer0.org2.example.com
     networks:
       - byfn
+    extra_hosts:
+      - "orderer0.example.com:172.17.0.1"
+      - "orderer1.example.com:172.17.0.1"
+      - "orderer2.example.com:172.17.0.1"
+
 
   peer1.org2.example.com:
     container_name: peer1.org2.example.com
@@ -47,6 +60,10 @@ services:
       service: peer1.org2.example.com
     networks:
       - byfn
+    extra_hosts:
+      - "orderer0.example.com:172.17.0.1"
+      - "orderer1.example.com:172.17.0.1"
+      - "orderer2.example.com:172.17.0.1"
 
   cli:
     container_name: cli
@@ -82,3 +99,7 @@ services:
       - peer1.org2.example.com
     networks:
       - byfn
+    extra_hosts:
+      - "orderer0.example.com:172.17.0.1"
+      - "orderer1.example.com:172.17.0.1"
+      - "orderer2.example.com:172.17.0.1"

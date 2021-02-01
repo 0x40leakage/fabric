@@ -18,8 +18,12 @@ orderer:
 ./byfn.sh generate -o etcdraft 
 
 # github.com/hyperledger/fabric/_debug/first-network
-docker-compose -f docker-compose-cli-raft-native-orderer.yaml up -d
+docker-compose -f docker-compose-cli-raft-native-3-orderers.yaml up -d
+docker exec cli scripts/script.sh mychannel 3 golang 10 false
 
+
+docker-compose -f docker-compose-cli-raft-native-3-orderers.yaml down -v
+sudo rm -rf ../orderer/orderer-data/* 
 
 
 # https://hyperledger-fabric.readthedocs.io/en/release-1.4/build_network.html#create-join-channel
