@@ -31,6 +31,20 @@ PeerOrgs:
   - Name: Org1
     Domain: org1.example.com
     EnableNodeOUs: true
+    Specs:
+      - Hostname: peer0
+        SANS:
+          - "localhost"
+          - 10.0.0.111
+          - 127.0.0.1
+          - 172.17.0.1
+      - Hostname: peer1
+        SANS:
+          - "localhost"
+          - 10.0.0.111
+          - 127.0.0.1
+          - 172.17.0.1
+
     # ---------------------------------------------------------------------------
     # "Specs"
     # ---------------------------------------------------------------------------
@@ -64,8 +78,8 @@ PeerOrgs:
     # sections and the aggregate nodes will be created for you.  Take care with
     # name collisions
     # ---------------------------------------------------------------------------
-    Template:
-      Count: 2
+    # Template:
+      # Count: 2
       # Start: 5
       # Hostname: {{.Prefix}}{{.Index}} # default
     # ---------------------------------------------------------------------------

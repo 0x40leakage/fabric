@@ -105,6 +105,7 @@ func (sc *serverCreds) ClientHandshake(context.Context,
 	return nil, nil, ClientHandshakeNotImplError
 }
 
+// !!!! ERROR HERE
 // ServerHandshake does the authentication handshake for servers.
 func (sc *serverCreds) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo, error) {
 	serverConfig := sc.serverConfig.Config()
