@@ -52,7 +52,10 @@ docker-compose -f docker-compose-cli-raft-native-3-orderers-1-peer.yaml up -d
 # ./scripts/script-1-native-peer.sh mychannel 3 golang 10 false
 ```
 
-- [ ] 关闭 `gossip.discovery` 报错，考虑先关闭 discovery 服务
+- [x] 先关闭 discovery 服务
+    - Don't put any bootstrap peers or anchor peers, and then peers don't know each other and thus don't gossip.
+    - > https://lists.hyperledger.org/g/fabric/topic/30184836
+
 
 
 
@@ -70,10 +73,11 @@ https://stackoverflow.com/questions/62495170/hyperledger-fabric-serverhandshake-
 2021-02-01 10:49:45.294 UTC [core.comm] ServerHandshake -> ERRO 06c Server TLS handshake failed in 174.908µs with error tls: first record does not look like a TLS handshake server=Orderer remoteaddress=127.0.0.1:59702 -->
 
 ```bash
+# export CORE_PEER_TLS_ENABLED=true   # !!!! 这个参数踩过坑
+
 export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
 export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
 export CORE_PEER_LOCALMSPID=Org1MSP
-# !!!! 这个参数
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_TLS_CERT_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
 export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
@@ -100,3 +104,11 @@ export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric
 
 ./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","b"]}'
 ```
+
+---
+
+```bash
+./peer chaincode invoke -o orderer0.example.com:7050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/_builddep/bad/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
+
+```
+
