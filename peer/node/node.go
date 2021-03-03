@@ -45,5 +45,5 @@ var nodeCmd = &cobra.Command{
 	Use:              nodeFuncName,
 	Short:            fmt.Sprint(nodeCmdDes),
 	Long:             fmt.Sprint(nodeCmdDes),
-	PersistentPreRun: common.InitCmd,
+	PersistentPreRun: common.InitCmd, // !!! 预执行
 }

@@ -139,7 +139,7 @@ func InitCrypto(mspMgrConfigDir, localMSPID, localMSPType string) error {
 	if err != nil {
 		return errors.WithMessage(err, "could not parse YAML config")
 	}
-
+	// !!! peer bccsp
 	err = mspmgmt.LoadLocalMspWithType(mspMgrConfigDir, bccspConfig, localMSPID, localMSPType)
 	if err != nil {
 		return errors.WithMessage(err, fmt.Sprintf("error when setting up MSP of type %s from directory %s", localMSPType, mspMgrConfigDir))
@@ -308,6 +308,7 @@ func InitCmd(cmd *cobra.Command, args []string) {
 	if mspType == "" {
 		mspType = msp.ProviderTypeToString(msp.FABRIC)
 	}
+	// !!! peer bccsp
 	err = InitCrypto(mspMgrConfigDir, mspID, mspType)
 	if err != nil { // Handle errors reading the config file
 		mainLogger.Errorf("Cannot run peer because %s", err.Error())

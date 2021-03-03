@@ -172,6 +172,7 @@ func GetLocalMspConfig(dir string, bccspConfig *factory.FactoryOpts, ID string) 
 	keystoreDir := filepath.Join(dir, keystore)
 	bccspConfig = SetupBCCSPKeystoreConfig(bccspConfig, keystoreDir)
 
+	// !!! 初始化 bccsp factory
 	err := factory.InitFactories(bccspConfig)
 	if err != nil {
 		return nil, errors.WithMessage(err, "could not initialize BCCSP Factories")

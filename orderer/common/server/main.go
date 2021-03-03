@@ -85,6 +85,7 @@ func Main() {
 		os.Exit(1)
 	}
 	initializeLogging()
+	// !!! orderer bccsp
 	initializeLocalMsp(conf)
 
 	prettyPrintStruct(conf)
@@ -163,6 +164,7 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 		serversToUpdate = append(serversToUpdate, grpcServer)
 	}
 
+	// !!!
 	tlsCallback := func(bundle *channelconfig.Bundle) {
 		logger.Debug("Executing callback to update root CAs")
 		updateTrustedRoots(caSupport, bundle, serversToUpdate...)
@@ -871,6 +873,7 @@ func updateTrustedRoots(rootCASupport *comm.CredentialSupport, cm channelconfig.
 	}
 }
 
+// !!!
 func updateClusterDialer(rootCASupport *comm.CredentialSupport, clusterDialer *cluster.PredicateDialer, localClusterRootCAs [][]byte) {
 	rootCASupport.Lock()
 	defer rootCASupport.Unlock()
