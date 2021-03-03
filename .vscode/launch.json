@@ -5,6 +5,34 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "solo-orderer",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/orderer",
+            "env": {
+                "FABRIC_LOGGING_SPEC": "INFO",
+                "ORDERER_GENERAL_LISTENADDRESS": "0.0.0.0",
+                "ORDERER_GENERAL_GENESISMETHOD": "file",
+                "ORDERER_GENERAL_GENESISFILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/channel-artifacts/genesis.block",
+                "ORDERER_GENERAL_LOCALMSPID": "OrdererMSP",
+                "ORDERER_GENERAL_LOCALMSPDIR": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp",
+                "ORDERER_GENERAL_TLS_ENABLED": "true",
+                "ORDERER_GENERAL_TLS_PRIVATEKEY": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.key",
+                "ORDERER_GENERAL_TLS_CERTIFICATE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.crt",
+                "ORDERER_GENERAL_TLS_ROOTCAS": "[/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/ca.crt]",
+                "ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.crt",
+                "ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/server.key",
+                "ORDERER_GENERAL_CLUSTER_ROOTCAS": "[/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/tls/ca.crt]",
+                "FABRIC_CFG_PATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig",
+                "ORDERER_GENERAL_LISTENPORT": "11050",
+                "ORDERER_OPERATIONS_LISTENADDRESS": "127.0.0.1:10443",
+                "ORDERER_FILELEDGER_LOCATION": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/orderer/orderer-data/0",
+                "ORDERER_CONSENSUS_WALDIR": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/orderer/orderer-data/0/etcdraft/wal",
+                "ORDERER_CONSENSUS_SNAPDIR": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/orderer/orderer-data/0/etcdraft/snapshot"
+            }
+        },
+        {
             "name": "orderer2",
             "type": "go",
             "request": "launch",
@@ -88,7 +116,6 @@
                 "ORDERER_CONSENSUS_SNAPDIR": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/orderer/orderer-data/0/etcdraft/snapshot"
             }
         },
-
         {
             "name": "peer0",
             "type": "go",
@@ -116,6 +143,38 @@
                 "CORE_PEER_LOCALMSPID": "Org1MSP",
                 "FABRIC_CFG_PATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig",
                 "CORE_PEER_MSPCONFIGPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp",
+                "CORE_PEER_FILESYSTEMPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/peer/peer-data/peer0.org1",
+                "CORE_OPERATIONS_LISTENADDRESS": "127.0.0.1:11443"
+            },
+            "args": ["node", "start"]
+        },
+        {
+            "name": "single-peer0",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/peer",
+            "env": {
+                "CORE_VM_ENDPOINT": "unix:///var/run/docker.sock",
+                "CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE": "net_byfn",
+                "FABRIC_LOGGING_SPEC": "INFO",
+                "CORE_PEER_TLS_ENABLED": "true",
+                "CORE_PEER_GOSSIP_USELEADERELECTION": "true",
+                "CORE_PEER_GOSSIP_ORGLEADER": "false",
+                "CORE_PEER_PROFILE_ENABLED": "true",
+                "CORE_PEER_TLS_CERT_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt",
+                "CORE_PEER_TLS_KEY_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key",
+                "CORE_PEER_TLS_ROOTCERT_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+                "CORE_PEER_ID": "peer0.org1.example.com",
+                "CORE_PEER_ADDRESS": "peer0.org1.example.com:7051",
+                "CORE_PEER_LISTENADDRESS": "0.0.0.0:7051",
+                "CORE_PEER_CHAINCODEADDRESS": "10.0.0.111:7052",
+                "CORE_PEER_CHAINCODELISTENADDRESS": "0.0.0.0:7052",
+                "CORE_PEER_GOSSIP_BOOTSTRAP": "",
+                "CORE_PEER_GOSSIP_EXTERNALENDPOINT": "peer0.org1.example.com:7051",
+                "CORE_PEER_LOCALMSPID": "Org1MSP",
+                "FABRIC_CFG_PATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig",
+                "CORE_PEER_MSPCONFIGPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp",
                 "CORE_PEER_FILESYSTEMPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/peer/peer-data/peer0.org1",
                 "CORE_OPERATIONS_LISTENADDRESS": "127.0.0.1:11443"
             },
