@@ -1,4 +1,6 @@
 
+## Prerequisite
+
 ```bash
 # github.com/hyperledger/fabric
 make configtxlator && make cryptogen && make configtxgen
@@ -8,7 +10,9 @@ make configtxlator && make cryptogen && make configtxgen
 ./byfn up
 ```
 
-orderer:
+## 1 native peer, 3 dockerized peers, 3 native raft orderers
+
+### 3 native raft orderers
 
 ```bash
 # https://yq.aliyun.com/articles/739846
@@ -40,26 +44,30 @@ export CHANNEL_NAME=mychannel
 ./peer0 channel create -o orderer0.example.com:7050 -c $CHANNEL_NAME -f /Users/slackbuffer/go/src/github.com/hyperledger/fabric/_debug/first-network/channel-artifacts/channel.tx --tls --cafile /Users/slackbuffer/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 ```
 
-peer:
+
+
+### 1 native peer, 3 dockerized peers
 
 ```bash
-# 3 native raft orderes, 1 native peer, 3 dockerized peers
-
 # /etc/hosts 加 peer0.org1.example.com 等到 127.0.0.1 的映射
 
 # github.com/hyperledger/fabric/_debug/first-network
 docker-compose -f docker-compose-cli-raft-native-3-orderers-1-peer.yaml up -d
 # ./scripts/script-1-native-peer.sh mychannel 3 golang 10 false
+
+docker-compose -f docker-compose-cli-raft-native-3-orderers-1-peer.yaml down -v
+sudo rm -rf ../peer/peer-data/* 
 ```
 
 - [x] 先关闭 discovery 服务
     - Don't put any bootstrap peers or anchor peers, and then peers don't know each other and thus don't gossip.
     - > https://lists.hyperledger.org/g/fabric/topic/30184836
 
+## 1 native peer, 1 native solo orderer
 
 
 
----
+## Misc
 
 https://chai2010.cn/advanced-go-programming-book/ch4-rpc/ch4-08-grpcurl.html
 
