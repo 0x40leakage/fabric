@@ -111,7 +111,7 @@
                 "CORE_PEER_LISTENADDRESS": "0.0.0.0:7051",
                 "CORE_PEER_CHAINCODEADDRESS": "10.0.0.111:7052",
                 "CORE_PEER_CHAINCODELISTENADDRESS": "0.0.0.0:7052",
-                "CORE_PEER_GOSSIP_BOOTSTRAP": "peer1.org1.example.com:8051",
+                "CORE_PEER_GOSSIP_BOOTSTRAP": "",
                 "CORE_PEER_GOSSIP_EXTERNALENDPOINT": "peer0.org1.example.com:7051",
                 "CORE_PEER_LOCALMSPID": "Org1MSP",
                 "FABRIC_CFG_PATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig",
