@@ -109,6 +109,70 @@ export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric
 sudo rm -rf ../orderer/orderer-data/*
 sudo rm -rf ../peer/peer-data/*
 ```
+
+### pkcs11
+
+```bash
+# build native peer
+go build -tags pkcs11
+# "buildFlags": "-tags=pkcs11"
+
+
+softhsm2-util --init-token --slot 0 --label "fabric" --so-pin 123456 --pin 654321
+# The token has been initialized.
+softhsm2-util --show-slots
+# Available slots:
+# Slot 336165381
+#     Slot info:
+#         Description:      SoftHSM slot ID 0x14097a05                                      
+#         Manufacturer ID:  SoftHSM project                 
+#         Hardware version: 2.2
+#         Firmware version: 2.2
+#         Token present:    yes
+#     Token info:
+#         Manufacturer ID:  SoftHSM project                 
+#         Model:            SoftHSM v2      
+#         Hardware version: 2.2
+#         Firmware version: 2.2
+#         Serial number:    ea5b2ba514097a05
+#         Initialized:      yes
+#         User PIN init.:   yes
+#         Label:            fabric
+
+# /usr/local/lib/softhsm/libsofthsm2.so
+
+## 导入 peer 节点的私钥
+## /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/keystore
+## !!! 注意导入的时候 id 要是私钥的 ski，它才能够通过证书拿到公钥，得到公钥的 ski 后找到对应私钥（公钥和私钥的 ski 值一样）
+softhsm2-util --import 5b874ddb3b8d35805ef06a2558623ab60a29e8e8cbe18f5bd8ea86dd84453fd2_sk --id 5b874ddb3b8d35805ef06a2558623ab60a29e8e8cbe18f5bd8ea86dd84453fd2 --label fabric --pin 654321 --slot 336165381
+## id 长度任意，hex 格式，这样是错的！！！
+
+## /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore
+## 导入 org1 admin 用户的私钥
+softhsm2-util --import fec5370c6a3e5242e442115947895c1165b7936f97c61cf24d7e8bddf568daa8_sk --id fec5370c6a3e5242e442115947895c1165b7936f97c61cf24d7e8bddf568daa8 --label fabric --pin 654321 --slot 336165381
+
+
+
+
+export FABRIC_CFG_PATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig
+export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+export CORE_PEER_LOCALMSPID=Org1MSP
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_TLS_CERT_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+export CORE_PEER_TLS_KEY_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key
+export CORE_PEER_TLS_ROOTCERT_FILE=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+export CORE_PEER_BCCSP_DEFAULT=PKCS11
+export CORE_PEER_BCCSP_PKCS11_LIBRARY=/usr/local/lib/softhsm/libsofthsm2.so
+export CORE_PEER_BCCSP_PKCS11_PIN=654321
+export CORE_PEER_BCCSP_PKCS11_LABEL=fabric
+export CORE_PEER_BCCSP_PKCS11_HASH=SHA2
+export CORE_PEER_BCCSP_PKCS11_SECURITY=256
+./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","a"]}'
+./peer chaincode invoke -o orderer0.example.com:11050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
+./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","b"]}'
+```
+
 ## Misc
 
 https://chai2010.cn/advanced-go-programming-book/ch4-rpc/ch4-08-grpcurl.html
@@ -159,6 +223,5 @@ export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric
 
 ```bash
 ./peer chaincode invoke -o orderer0.example.com:7050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/_builddep/bad/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt -c '{"Args":["invoke","a","b","10"]}'
-
 ```
 

@@ -179,6 +179,45 @@
                 "CORE_OPERATIONS_LISTENADDRESS": "127.0.0.1:11443"
             },
             "args": ["node", "start"]
+        },
+        {
+            "name": "single-peer0-softhsm",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/peer",
+            "env": {
+                "CORE_VM_ENDPOINT": "unix:///var/run/docker.sock",
+                "CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE": "net_byfn",
+                "FABRIC_LOGGING_SPEC": "INFO",
+                "CORE_PEER_TLS_ENABLED": "true",
+                "CORE_PEER_GOSSIP_USELEADERELECTION": "true",
+                "CORE_PEER_GOSSIP_ORGLEADER": "false",
+                "CORE_PEER_PROFILE_ENABLED": "true",
+                "CORE_PEER_TLS_CERT_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt",
+                "CORE_PEER_TLS_KEY_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.key",
+                "CORE_PEER_TLS_ROOTCERT_FILE": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+                "CORE_PEER_ID": "peer0.org1.example.com",
+                "CORE_PEER_ADDRESS": "peer0.org1.example.com:7051",
+                "CORE_PEER_LISTENADDRESS": "0.0.0.0:7051",
+                "CORE_PEER_CHAINCODEADDRESS": "10.0.0.111:7052",
+                "CORE_PEER_CHAINCODELISTENADDRESS": "0.0.0.0:7052",
+                "CORE_PEER_GOSSIP_BOOTSTRAP": "",
+                "CORE_PEER_GOSSIP_EXTERNALENDPOINT": "peer0.org1.example.com:7051",
+                "CORE_PEER_LOCALMSPID": "Org1MSP",
+                "FABRIC_CFG_PATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/sampleconfig",
+                "CORE_PEER_MSPCONFIGPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp",
+                "CORE_PEER_FILESYSTEMPATH": "/home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/peer/peer-data/peer0.org1",
+                "CORE_OPERATIONS_LISTENADDRESS": "127.0.0.1:11443",
+                "CORE_PEER_BCCSP_DEFAULT": "PKCS11",
+                "CORE_PEER_BCCSP_PKCS11_LIBRARY": "/usr/local/lib/softhsm/libsofthsm2.so",
+                "CORE_PEER_BCCSP_PKCS11_PIN": "654321",
+                "CORE_PEER_BCCSP_PKCS11_LABEL": "fabric",
+                "CORE_PEER_BCCSP_PKCS11_HASH": "SHA2",
+                "CORE_PEER_BCCSP_PKCS11_SECURITY": "256"
+            },
+            "args": ["node", "start"],
+            "buildFlags": "-tags=pkcs11"
         }
     ]
 }

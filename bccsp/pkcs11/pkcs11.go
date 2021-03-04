@@ -144,10 +144,11 @@ func (csp *impl) getECKey(ski []byte) (pubKey *ecdsa.PublicKey, isPriv bool, err
 	defer func() { csp.handleSessionReturn(err, session) }()
 
 	isPriv = true
+	// !!! softhsm 导入私钥时的 --id 配对就能找到私钥了
 	_, err = csp.findKeyPairFromSKI(session, ski, privateKeyType)
 	if err != nil {
 		isPriv = false
-		logger.Debugf("Private key not found [%s] for SKI [%s], looking for Public key", err, hex.EncodeToString(ski))
+		logger.Infof("Private key not found [%s] for SKI [%s], looking for Public key", err, hex.EncodeToString(ski))
 	}
 
 	publicKey, err := csp.findKeyPairFromSKI(session, ski, publicKeyType)
