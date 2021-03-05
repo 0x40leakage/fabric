@@ -420,6 +420,7 @@ func (e *Endorser) preProcess(signedProp *pb.SignedProposal) (*validateResult, e
 }
 
 // ProcessProposal process the Proposal
+// !!! peer endorser server 背书交易入口（endorser server 对 ProcessProposal 的实现）
 func (e *Endorser) ProcessProposal(ctx context.Context, signedProp *pb.SignedProposal) (*pb.ProposalResponse, error) {
 	// start time for computing elapsed time metric for successfully endorsed proposals
 	startTime := time.Now()

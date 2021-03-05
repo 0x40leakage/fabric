@@ -52,7 +52,7 @@ func LoadLocalMsp(dir string, bccspConfig *factory.FactoryOpts, mspID string) er
 // HOWEVER IN THE INTERIM, THESE HELPER FUNCTIONS ARE REQUIRED
 
 var m sync.Mutex
-var localMsp msp.MSP
+var localMsp msp.MSP // !!! 赋值内部变量
 var mspMap map[string]msp.MSPManager = make(map[string]msp.MSPManager)
 var mspLogger = flogging.MustGetLogger("msp")
 
@@ -138,6 +138,7 @@ func GetLocalMSP() msp.MSP {
 		return localMsp
 	}
 
+	// 创建 msp 实例
 	localMsp = loadLocaMSP()
 
 	return localMsp
@@ -145,7 +146,7 @@ func GetLocalMSP() msp.MSP {
 
 func loadLocaMSP() msp.MSP {
 	// determine the type of MSP (by default, we'll use bccspMSP)
-	mspType := viper.GetString("peer.localMspType")
+	mspType := viper.GetString("peer.localMspType") // "bccsp"(default), "idemix"
 	if mspType == "" {
 		mspType = msp.ProviderTypeToString(msp.FABRIC)
 	}
@@ -159,6 +160,7 @@ func loadLocaMSP() msp.MSP {
 		mspLogger.Panicf("msp type " + mspType + " unknown")
 	}
 
+	//
 	mspInst, err := msp.New(newOpts)
 	if err != nil {
 		mspLogger.Fatalf("Failed to initialize local MSP, received err %+v", err)

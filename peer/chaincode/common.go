@@ -341,6 +341,7 @@ type ChaincodeCmdFactory struct {
 }
 
 // InitCmdFactory init the ChaincodeCmdFactory with default clients
+// !!! 初始化了 broadcast，deliver，endoser client；
 func InitCmdFactory(cmdName string, isEndorserRequired, isOrdererRequired bool) (*ChaincodeCmdFactory, error) {
 	var err error
 	var endorserClients []pb.EndorserClient
@@ -466,6 +467,7 @@ func ChaincodeInvokeOrQuery(
 	}
 	var responses []*pb.ProposalResponse
 	for _, endorser := range endorserClients {
+		// !!! endorser client 调用请求 endorser server 处理背书
 		proposalResp, err := endorser.ProcessProposal(context.Background(), signedProp)
 		if err != nil {
 			return nil, errors.WithMessage(err, fmt.Sprintf("error endorsing %s", funcName))
@@ -507,6 +509,7 @@ func ChaincodeInvokeOrQuery(
 			}
 
 			// send the envelope for ordering
+			// !!! broadcast client 调用 Send
 			if err = bc.Send(env); err != nil {
 				return proposalResp, errors.WithMessage(err, fmt.Sprintf("error sending transaction for %s", funcName))
 			}

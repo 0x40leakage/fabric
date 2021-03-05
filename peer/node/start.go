@@ -430,6 +430,7 @@ func serve(args []string) error {
 	// start the peer server
 	auth := authHandler.ChainFilters(serverEndorser, authFilters...)
 	// Register the Endorser server
+	// !!! 注册背书 grpc server
 	pb.RegisterEndorserServer(peerServer.Server(), auth)
 
 	go func() {

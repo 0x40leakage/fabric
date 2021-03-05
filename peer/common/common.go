@@ -85,7 +85,7 @@ type commonClient struct {
 }
 
 func init() {
-	GetEndorserClientFnc = GetEndorserClient
+	GetEndorserClientFnc = GetEndorserClient // !!! 获取 endorser client 的方法
 	GetDefaultSignerFnc = GetDefaultSigner
 	GetBroadcastClientFnc = GetBroadcastClient
 	GetOrdererEndpointOfChainFnc = GetOrdererEndpointOfChain

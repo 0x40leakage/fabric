@@ -713,7 +713,7 @@ func (x *atomicBroadcastDeliverClient) Recv() (*DeliverResponse, error) {
 }
 
 // AtomicBroadcastServer is the server API for AtomicBroadcast service.
-type AtomicBroadcastServer interface {
+type AtomicBroadcastServer interface { // !!! grpc server 里对接口的描述是站在客户端的角度的
 	// broadcast receives a reply of Acknowledgement for each common.Envelope in order, indicating success or type of failure
 	Broadcast(AtomicBroadcast_BroadcastServer) error
 	// deliver first requires an Envelope of type DELIVER_SEEK_INFO with Payload data as a mashaled SeekInfo message, then a stream of block replies is received.

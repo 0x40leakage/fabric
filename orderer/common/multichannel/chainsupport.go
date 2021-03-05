@@ -24,8 +24,8 @@ type ChainSupport struct {
 	*ledgerResources
 	msgprocessor.Processor
 	*BlockWriter
-	consensus.Chain
-	cutter blockcutter.Receiver
+	consensus.Chain // Chain defines a way to inject messages for ordering.
+	cutter          blockcutter.Receiver
 	crypto.LocalSigner
 }
 

@@ -109,6 +109,7 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 
 	lf, _ := createLedgerFactory(conf, metricsProvider)
 	sysChanLastConfigBlock := extractSysChanLastConfig(lf, bootstrapBlock)
+	// 比较系统通道的最新配置块和系统通道的创世区块，哪个新用哪个
 	clusterBootBlock := selectClusterBootBlock(bootstrapBlock, sysChanLastConfigBlock)
 
 	signer := localmsp.NewSigner()
@@ -164,7 +165,6 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 		serversToUpdate = append(serversToUpdate, grpcServer)
 	}
 
-	// !!!
 	tlsCallback := func(bundle *channelconfig.Bundle) {
 		logger.Debug("Executing callback to update root CAs")
 		updateTrustedRoots(caSupport, bundle, serversToUpdate...)
@@ -179,6 +179,7 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 	}
 
 	expirationLogger := flogging.MustGetLogger("certmonitor")
+	// 证书过期前提前提醒
 	crypto.TrackExpiration(
 		serverConfig.SecOpts.UseTLS,
 		serverConfig.SecOpts.Certificate,
@@ -191,7 +192,7 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 
 	manager := initializeMultichannelRegistrar(clusterBootBlock, r, clusterDialer, clusterServerConfig, clusterGRPCServer, conf, signer, metricsProvider, opsSystem, lf, tlsCallback)
 	mutualTLS := serverConfig.SecOpts.UseTLS && serverConfig.SecOpts.RequireClientCert
-	expiration := conf.General.Authentication.NoExpirationChecks
+	expiration := conf.General.Authentication.NoExpirationChecks // 是否有证书过期校验
 	server := NewServer(manager, metricsProvider, &conf.Debug, conf.General.Authentication.TimeWindow, mutualTLS, expiration)
 
 	logger.Infof("Starting %s", metadata.GetVersionInfo())
@@ -210,6 +211,7 @@ func Start(cmd string, conf *localconfig.TopLevel) {
 	}
 
 	initializeProfilingService(conf)
+	// !!! grpc 服务端（包括 broadcast 和 deliver）
 	ab.RegisterAtomicBroadcastServer(grpcServer.Server(), server)
 	logger.Info("Beginning to serve requests")
 	grpcServer.Start()
@@ -506,7 +508,7 @@ func initializeServerConfig(conf *localconfig.TopLevel, metricsProvider metrics.
 				logger.Fatalf("Failed to load ServerRootCAs file '%s' (%s)",
 					err, serverRoot)
 			}
-			serverRootCAs = append(serverRootCAs, root)
+			serverRootCAs = append(serverRootCAs, root) // !!! [ ] 未用到
 		}
 		if secureOpts.RequireClientCert {
 			for _, clientRoot := range conf.General.TLS.ClientRootCAs {

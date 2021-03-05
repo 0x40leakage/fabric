@@ -35,7 +35,7 @@ type cacheItem struct {
 	key   string
 	value interface{}
 	// set to 1 when get() is called. set to 0 when victim scan
-	referenced int32
+	referenced int32 // 状态标识位
 }
 
 func newSecondChanceCache(cacheSize int) *secondChanceCache {
@@ -97,7 +97,7 @@ func (cache *secondChanceCache) add(key string, value interface{}) {
 	for {
 		// checks whether this item is recently accsessed or not
 		victim := cache.items[cache.position]
-		if atomic.LoadInt32(&victim.referenced) == 0 {
+		if atomic.LoadInt32(&victim.referenced) == 0 { // 找到一个未被访问的 item，直接将其删除
 			// a victim is found. delete it, and store the new item here.
 			delete(cache.table, victim.key)
 			cache.table[key] = &item
@@ -108,6 +108,7 @@ func (cache *secondChanceCache) add(key string, value interface{}) {
 
 		// referenced bit is set to false so that this item will be get purged
 		// unless it is accessed until a next victim scan
+		// 下一轮检查才会将查到此元素（循环队列）
 		atomic.StoreInt32(&victim.referenced, 0)
 		cache.position = (cache.position + 1) % size
 	}
