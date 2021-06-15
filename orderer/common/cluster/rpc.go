@@ -133,6 +133,7 @@ func (s *RPC) getOrCreateStream(destination uint64, operationType OperationType)
 	if stream != nil {
 		return stream, nil
 	}
+	// !!!
 	stub, err := s.Comm.Remote(s.Channel, destination)
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -319,6 +319,19 @@ func CreateChaincodeProposalWithTxIDNonceAndTransient(txid string, typ common.He
 			},
 		),
 	}
+	// tmp := common.ChannelHeader{
+	// 	Type:      int32(typ),
+	// 	TxId:      txid,
+	// 	Timestamp: timestamp,
+	// 	ChannelId: chainID,
+	// 	Extension: ccHdrExtBytes,
+	// 	Epoch:     epoch,
+	// }
+	// tmpb := common.SignatureHeader{
+	// 	Nonce:   nonce,
+	// 	Creator: creator,
+	// }
+	// fmt.Printf("\n%v", tmpb.Nonce)
 
 	hdrBytes, err := proto.Marshal(hdr)
 	if err != nil {

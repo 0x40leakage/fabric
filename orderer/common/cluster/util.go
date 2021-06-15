@@ -139,6 +139,7 @@ func (dialer *PredicateDialer) UpdateRootCAs(serverRootCAs [][]byte) {
 	dialer.ClientConfig.SecOpts.ServerRootCAs = serverRootCAs
 }
 
+// !!!
 // Dial creates a new gRPC connection that can only be established, if the remote node's
 // certificate chain satisfy verifyFunc
 func (dialer *PredicateDialer) Dial(address string, verifyFunc RemoteVerifier) (*grpc.ClientConn, error) {
@@ -373,6 +374,7 @@ func SignatureSetFromBlock(block *common.Block) ([]*common.SignedData, error) {
 	return signatureSet, nil
 }
 
+// !!! *
 // VerifyBlockSignature verifies the signature on the block with the given BlockVerifier and the given config.
 func VerifyBlockSignature(block *common.Block, verifier BlockVerifier, config *common.ConfigEnvelope) error {
 	signatureSet, err := SignatureSetFromBlock(block)
@@ -388,6 +390,7 @@ type EndpointCriteria struct {
 	TLSRootCAs [][]byte // PEM encoded TLS root CA certificates
 }
 
+// !!! *
 // EndpointconfigFromConfigBlock retrieves TLS CA certificates and endpoints
 // from a config block.
 func EndpointconfigFromConfigBlock(block *common.Block) ([]EndpointCriteria, error) {

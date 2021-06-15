@@ -449,6 +449,7 @@ type ConsenterCertificate struct {
 	Logger               *flogging.FabricLogger
 }
 
+// !!! *
 // type ConsenterCertificate []byte
 
 // IsConsenterOfChannel returns whether the caller is a consenter of a channel

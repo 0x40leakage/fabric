@@ -24,6 +24,8 @@ import (
 	"github.com/hyperledger/fabric/core/common/validation"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/protos/common"
+	"github.com/hyperledger/fabric/protos/ledger/rwset"
+	"github.com/hyperledger/fabric/protos/ledger/rwset/kvrwset"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/transientstore"
 	putils "github.com/hyperledger/fabric/protos/utils"
@@ -251,11 +253,11 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 	}
 
 	if txParams.TXSimulator != nil {
+		// !!! anchor 001
 		if simResult, err = txParams.TXSimulator.GetTxSimulationResults(); err != nil {
 			txParams.TXSimulator.Done()
 			return nil, nil, nil, nil, err
 		}
-
 		if simResult.PvtSimulationResults != nil {
 			if cid.Name == "lscc" {
 				// TODO: remove once we can store collection configuration outside of LSCC
@@ -498,6 +500,7 @@ func (e *Endorser) ProcessProposal(ctx context.Context, signedProp *pb.SignedPro
 	//       to validate the supplied action before endorsing it
 
 	// 1 -- simulate
+	// !!! 调用 cc 模拟执行
 	cd, res, simulationResult, ccevent, err := e.SimulateProposal(txParams, hdrExt.ChaincodeId)
 	if err != nil {
 		return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: err.Error()}}, nil
@@ -518,6 +521,36 @@ func (e *Endorser) ProcessProposal(ctx context.Context, signedProp *pb.SignedPro
 			}
 
 			return pResp, nil
+		}
+	}
+
+	// 校验读写集
+	rwSet := &rwset.TxReadWriteSet{}
+	err = proto.Unmarshal(simulationResult, rwSet)
+	if err != nil {
+		return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: fmt.Sprintf("unmarshal rwset failed: %v", err)}}, nil
+	}
+
+	for _, nsRwSet := range rwSet.NsRwset {
+		kvrwSet := &kvrwset.KVRWSet{}
+		err = proto.Unmarshal(nsRwSet.Rwset, kvrwSet)
+
+		if err != nil {
+			return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: fmt.Sprintf("unmarshal kvrwset failed: %v", err)}}, nil
+		}
+		if kvrwSet.Writes != nil || len(kvrwSet.Writes) != 0 {
+			endorserLogger.Infof("~~~~~~~~~~~~~~~~~~~~~~~~~with rw")
+			return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: "with rw"}}, nil
+		}
+
+		for _, v := range nsRwSet.CollectionHashedRwset {
+			pvt := &kvrwset.HashedRWSet{}
+			err = proto.Unmarshal(v.HashedRwset, pvt)
+
+			if pvt.HashedWrites != nil || len(pvt.HashedWrites) != 0 {
+				endorserLogger.Infof("~~~~~~~~~~~~~~~~~~~~~~~~~with hrw")
+				return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: "with hrw"}}, nil
+			}
 		}
 	}
 

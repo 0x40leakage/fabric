@@ -17,6 +17,8 @@ limitations under the License.
 package rwsetutil
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/version"
@@ -148,12 +150,17 @@ func (b *RWSetBuilder) GetTxSimulationResults() (*ledger.TxSimulationResults, er
 		}
 	}
 	// Compute the proto bytes for pub rwset
+	// !!! anchor 001
 	pubSet := b.GetTxReadWriteSet()
 	if pubSet != nil {
 		if pubDataProto, err = pubSet.toProtoMsg(); err != nil {
 			return nil, err
 		}
 	}
+	fmt.Printf("TxSimulationResults: %#v\n", ledger.TxSimulationResults{
+		PubSimulationResults: pubDataProto,
+		PvtSimulationResults: pvtDataProto,
+	})
 	return &ledger.TxSimulationResults{
 		PubSimulationResults: pubDataProto,
 		PvtSimulationResults: pvtDataProto,
@@ -173,6 +180,7 @@ func (b *RWSetBuilder) GetTxReadWriteSet() *TxRwSet {
 
 	var nsPubRwSets []*NsRwSet
 	for _, nsPubRwBuilder := range sortedNsPubBuilders {
+		// !!! anchor 001
 		nsPubRwSets = append(nsPubRwSets, nsPubRwBuilder.build())
 	}
 	return &TxRwSet{NsRwSets: nsPubRwSets}
@@ -204,6 +212,13 @@ func (b *nsPubRwBuilder) build() *NsRwSet {
 	//add write set
 	util.GetValuesBySortedKeys(&(b.writeMap), &writeSet)
 	util.GetValuesBySortedKeys(&(b.metadataWriteMap), &metadataWriteSet)
+	// !!! anchor 001
+	for _, r := range readSet {
+		fmt.Printf("readSet: %#v\n%#v\n", *r, *(r.Version))
+	}
+	for _, r := range writeSet {
+		fmt.Printf("writeSet: %#v\nValue: %s\n", *r, string(r.Value))
+	}
 	//add range query info
 	for _, key := range b.rangeQueriesKeys {
 		rangeQueriesInfo = append(rangeQueriesInfo, b.rangeQueriesMap[key])
@@ -214,6 +229,17 @@ func (b *nsPubRwBuilder) build() *NsRwSet {
 	for _, collBuilder := range sortedCollBuilders {
 		collHashedRwSet = append(collHashedRwSet, collBuilder.build())
 	}
+	// !!! anchor 001
+	fmt.Printf("\n&NsRwSet: %#v\n\n", NsRwSet{
+		NameSpace: b.namespace,
+		KvRwSet: &kvrwset.KVRWSet{
+			Reads:            readSet,
+			Writes:           writeSet,
+			MetadataWrites:   metadataWriteSet,
+			RangeQueriesInfo: rangeQueriesInfo,
+		},
+		CollHashedRwSets: collHashedRwSet,
+	})
 	return &NsRwSet{
 		NameSpace: b.namespace,
 		KvRwSet: &kvrwset.KVRWSet{

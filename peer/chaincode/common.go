@@ -86,6 +86,10 @@ func getChaincodeSpec(cmd *cobra.Command) (*pb.ChaincodeSpec, error) {
 		ChaincodeId: &pb.ChaincodeID{Path: chaincodePath, Name: chaincodeName, Version: chaincodeVersion},
 		Input:       input,
 	}
+	// logger.Infof("%#v\n", *spec.ChaincodeId)
+	// for _, a := range spec.Input.Args {
+	// 	logger.Info(string(a) + " ")
+	// }
 	return spec, nil
 }
 

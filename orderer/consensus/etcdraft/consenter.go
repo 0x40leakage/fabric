@@ -331,7 +331,7 @@ func createComm(clusterDialer *cluster.PredicateDialer, c *Consenter, config loc
 		Metrics:                          metrics,
 		ChanExt:                          c,
 		H:                                c,
-		CompareCertificate:               compareCert,
+		CompareCertificate:               compareCert, // !!!
 	}
 	c.Communication = comm
 	return comm

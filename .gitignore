@@ -54,3 +54,5 @@ _debug/orderer/orderer-data
 _debug/peer/peer-data
 
 connection-org*
+
+__debug_bin

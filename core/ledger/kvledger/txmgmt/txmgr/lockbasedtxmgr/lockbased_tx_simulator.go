@@ -158,6 +158,7 @@ func (s *lockBasedTxSimulator) GetTxSimulationResults() (*ledger.TxSimulationRes
 		return nil, s.helper.err
 	}
 	s.helper.addRangeQueryInfo()
+	// !!! anchor 001
 	return s.rwsetBuilder.GetTxSimulationResults()
 }
 

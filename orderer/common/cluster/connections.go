@@ -81,6 +81,7 @@ func (c *ConnectionStore) Disconnect(expectedServerCert []byte) {
 	c.Connections.Remove(expectedServerCert)
 }
 
+// !!!
 // Connection obtains a connection to the given endpoint and expects the given server certificate
 // to be presented by the remote node
 func (c *ConnectionStore) Connection(endpoint string, expectedServerCert []byte) (*grpc.ClientConn, error) {
@@ -96,6 +97,7 @@ func (c *ConnectionStore) Connection(endpoint string, expectedServerCert []byte)
 	return c.connect(endpoint, expectedServerCert)
 }
 
+// !!!
 // connect connects to the given endpoint and expects the given TLS server certificate
 // to be presented at the time of authentication
 func (c *ConnectionStore) connect(endpoint string, expectedServerCert []byte) (*grpc.ClientConn, error) {

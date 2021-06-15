@@ -198,6 +198,7 @@ func (id *identity) Serialize() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not marshal a SerializedIdentity structure for identity %s", id.id)
 	}
+	// mspIdentityLogger.Infof("\n%s", sId.Mspid)
 
 	return idBytes, nil
 }

@@ -103,6 +103,8 @@ export CORE_PEER_MSPCONFIGPATH=/home/ubuntu/go/src/github.com/hyperledger/fabric
 
 ./peer chaincode query -C mychannel -n mycc -c '{"Args":["query","b"]}'
 
+./peer chaincode upgrade -o orderer0.example.com:11050 --tls true --cafile /home/ubuntu/go/src/github.com/hyperledger/fabric/_debug/first-network-simple/crypto-config/ordererOrganizations/example.com/orderers/orderer0.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc -l golang -v 3.2 -c '{"Args":["init","a","100","b","200"]}' -P 'OR ('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
+
 
 # 清理环境
 ./byfn.sh down
